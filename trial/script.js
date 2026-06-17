@@ -164,7 +164,7 @@ async function muatDataArsip() {
             res.data.forEach(row => {
                 let id = row.id_transaksi;
 
-                // PECAH KEMBALI ALAMAT DAN UP DARI SERVER BOLO
+                // PECAH KEMBALI ALAMAT DAN UP DARI SERVER
                 let kegiatanAsli = row.kegiatan || '';
                 let arrPisah = kegiatanAsli.split("|||");
                 let d_alamat = arrPisah[0] || '';
@@ -183,6 +183,12 @@ async function muatDataArsip() {
                 grouped[id].items.push({ desc: row.nama_barang, qty: parseFloat(row.qty), satuan: row.satuan, harga: parseFloat(row.harga_satuan), total: parseFloat(row.qty) * parseFloat(row.harga_satuan) });
             });
             databaseArsip = Object.values(grouped).reverse();
+            
+            // JURUS INDEX MEMORI (Suntik ID internal yang dijamin mulus Bolo!)
+            databaseArsip.forEach((item, index) => {
+                item.mem_id = index;
+            });
+            
             renderTabelArsip(databaseArsip);
             listCustomerDb = [...new Set(databaseArsip.map(item => item.customer))];
         }
@@ -196,8 +202,8 @@ function renderTabelArsip(dataArray) {
         let listBarangHtml = row.items.map(it => `<div class="arsip-item-list"><div style="display:flex; justify-content:space-between;"><span>&bull; ${it.desc} <span style="color:var(--text-muted); font-size:0.75rem;">(${it.qty} ${it.satuan})</span></span><span style="font-weight:600;">${formatRp(it.total)}</span></div></div>`).join('');
         let teksAlamat = row.alamat_asli ? row.alamat_asli : '-';
         
-        // JURUS ANTI MACET: Ganti '${index}' dengan '${row.id_transaksi}'
-        tbody.innerHTML += `<tr><td style="font-weight:600;">${row.tanggal}</td><td><div style="font-weight:bold;">Kwi: ${row.no_kwitansi || '-'}</div><div style="font-size:0.75rem; color:var(--text-muted);">Nota: ${row.no_nota || '-'}</div></td><td><div style="font-weight:bold; color:var(--primary);">${row.customer.toUpperCase()}</div><div style="font-size:0.75rem; color:var(--text-muted); margin-top: 4px;">${teksAlamat}</div></td><td>${listBarangHtml}</td><td style="text-align:right; font-weight:bold; font-size:1.1rem; color:var(--text-heading);">${formatRp(row.grand_total)}</td><td style="text-align:center; display:flex; gap:5px; flex-wrap:wrap; justify-content:center;"><button class="action-btn" style="background:var(--success);" onclick="copyArsip('${row.id_transaksi}')" title="Copy menjadi Nota Baru"><i class="fa-regular fa-copy"></i></button> <button class="action-btn" style="background:var(--warning);" onclick="editArsip('${row.id_transaksi}')" title="Edit Data"><i class="fa-solid fa-pen"></i></button> <button class="action-btn" style="background:var(--danger);" onclick="hapusArsip('${row.id_transaksi}')" title="Hapus"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+        // PARAMETER TOMBOL SEKARANG MEMAKAI mem_id (Angka Murni Anti Rusak)
+        tbody.innerHTML += `<tr><td style="font-weight:600;">${row.tanggal}</td><td><div style="font-weight:bold;">Kwi: ${row.no_kwitansi || '-'}</div><div style="font-size:0.75rem; color:var(--text-muted);">Nota: ${row.no_nota || '-'}</div></td><td><div style="font-weight:bold; color:var(--primary);">${row.customer.toUpperCase()}</div><div style="font-size:0.75rem; color:var(--text-muted); margin-top: 4px;">${teksAlamat}</div></td><td>${listBarangHtml}</td><td style="text-align:right; font-weight:bold; font-size:1.1rem; color:var(--text-heading);">${formatRp(row.grand_total)}</td><td style="text-align:center; display:flex; gap:5px; flex-wrap:wrap; justify-content:center;"><button class="action-btn" style="background:var(--success);" onclick="copyArsip(${row.mem_id})" title="Copy menjadi Nota Baru"><i class="fa-regular fa-copy"></i></button> <button class="action-btn" style="background:var(--warning);" onclick="editArsip(${row.mem_id})" title="Edit Data"><i class="fa-solid fa-pen"></i></button> <button class="action-btn" style="background:var(--danger);" onclick="hapusArsip(${row.mem_id})" title="Hapus"><i class="fa-solid fa-trash"></i></button></td></tr>`;
     });
 }
 
@@ -218,14 +224,12 @@ function setUIStatus(mode) {
     }
 }
 
-// JURUS PENGAMAN FORM BOLO
 function isiFormDariArsip(d) {
     document.getElementById('tglSurat').value = d.tanggal; 
     document.getElementById('noKwitansi').value = d.no_kwitansi; 
     document.getElementById('noNota').value = d.no_nota; 
     document.getElementById('customer').value = d.customer; 
     
-    // Keamanan jika elemen Alamat/UP tidak ketemu
     let elAlamat = document.getElementById('alamatCustomer');
     if(elAlamat) elAlamat.value = d.alamat_asli || '';
     
@@ -239,10 +243,9 @@ function isiFormDariArsip(d) {
     stateItems = JSON.parse(JSON.stringify(d.items)); 
 }
 
-// JURUS PENCARIAN ID TRANSAKSI BOLO (KEBAL TIPE DATA)
-function copyArsip(id_transaksi) { 
-    // Kita paksa ubah jadi String() agar Angka dan Teks bisa berjodoh
-    let d = databaseArsip.find(x => String(x.id_transaksi) === String(id_transaksi));
+// JURUS PENCARIAN INDEX MEMORI (100% KEBAL BUG BOLO)
+function copyArsip(mem_id) { 
+    let d = databaseArsip.find(x => x.mem_id === mem_id);
     if(!d) return Swal.fire('Gagal', 'Data tidak ditemukan di memori Bolo!', 'error');
     
     isiFormDariArsip(d); 
@@ -254,8 +257,8 @@ function copyArsip(id_transaksi) {
     Swal.fire({ toast:true, position:'top-end', icon:'success', title:'Tercopy! Siap diedit jadi Nota Baru', showConfirmButton:false, timer:2500 }); 
 }
 
-function editArsip(id_transaksi) { 
-    let d = databaseArsip.find(x => String(x.id_transaksi) === String(id_transaksi));
+function editArsip(mem_id) { 
+    let d = databaseArsip.find(x => x.mem_id === mem_id);
     if(!d) return Swal.fire('Gagal', 'Data tidak ditemukan di memori Bolo!', 'error');
     
     isiFormDariArsip(d); 
@@ -267,11 +270,14 @@ function editArsip(id_transaksi) {
     Swal.fire({ toast:true, position:'top-end', icon:'info', title:'Data Siap Diedit!', showConfirmButton:false, timer:2000 }); 
 }
 
-async function hapusArsip(id_transaksi) {
+async function hapusArsip(mem_id) {
+    let d = databaseArsip.find(x => x.mem_id === mem_id);
+    if(!d) return Swal.fire('Gagal', 'Data tidak ditemukan!', 'error');
+
     Swal.fire({ title: 'Yakin Hapus?', text: "Data tidak bisa dikembalikan!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Ya, Hapus' }).then(async (result) => {
         if (result.isConfirmed) { 
             Swal.fire({ title: 'Menghapus...', didOpen: () => { Swal.showLoading() } }); 
-            await fetch(URL_GAS, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "delete", id: id_transaksi }) }); 
+            await fetch(URL_GAS, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "delete", id: d.id_transaksi }) }); 
             Swal.fire('Terhapus!', 'Baris arsip telah dihapus.', 'success'); 
             muatDataArsip(); 
         }
