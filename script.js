@@ -25,8 +25,22 @@ async function eksekusiLogin() {
     
     Swal.fire({ title: 'Otentikasi...', didOpen: () => { Swal.showLoading() } });
     try {
-        let res = await fetch(URL_GAS, { method: 'POST', body: JSON.stringify({ action: "login", username: u, password: p }) });
-        let data = await res.json();
+        let res = await fetch(URL_GAS, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // <-- Jurus Anti-CORS Bolo
+            body: JSON.stringify({ action: "login", username: u, password: p }) 
+        });
+        
+        let text = await res.text(); 
+        let data;
+        
+        try {
+            data = JSON.parse(text); // Coba terjemahkan balasan dari Google
+        } catch(err) {
+            console.error("Error Server:", text);
+            return Swal.fire('Error Server', 'Google Script belum di-Deploy Versi Baru! Cek langkah 1 Bolo.', 'error');
+        }
+
         if(data.success) {
             localStorage.setItem('gla_role', data.role);
             localStorage.setItem('gla_user', data.username);
@@ -35,7 +49,7 @@ async function eksekusiLogin() {
         } else {
             Swal.fire('Gagal', data.message, 'error');
         }
-    } catch(e) { Swal.fire('Error', 'Gagal koneksi ke server.', 'error'); }
+    } catch(e) { Swal.fire('Error', 'Gagal koneksi ke server. Pastikan HP ada kuotanya Bolo.', 'error'); }
 }
 
 function eksekusiLogout() {
