@@ -80,9 +80,15 @@ async function hapusUser(id) { if(confirm('Yakin hapus user ini?')) { await fetc
 // ==========================================
 // 3. LOGIKA KERANJANG & ARSIP UTAMA
 // ==========================================
+// 1. JURUS ANTI MACET SAAT CEK NOTA GANDA
 function cekHistoriNota() {
-    let inputNota = document.getElementById('noNota').value.toLowerCase().trim(); let warningEl = document.getElementById('warningNota'); let isEditing = document.getElementById('editIdArsip').value !== "";
-    let isExist = databaseArsip.some(r => r.no_nota && r.no_nota.toLowerCase().trim() === inputNota);
+    let inputNota = String(document.getElementById('noNota').value).toLowerCase().trim(); 
+    let warningEl = document.getElementById('warningNota'); 
+    let isEditing = document.getElementById('editIdArsip').value !== "";
+    
+    // Dibungkus String() agar angka murni dari Google Sheets tidak bikin crash
+    let isExist = databaseArsip.some(r => r.no_nota && String(r.no_nota).toLowerCase().trim() === inputNota);
+    
     warningEl.style.display = (isExist && !isEditing && inputNota !== "") ? 'block' : 'none';
 }
 
@@ -207,9 +213,16 @@ function renderTabelArsip(dataArray) {
     });
 }
 
+// 2. JURUS ANTI MACET PADA PENCARIAN (FILTER) ARSIP
 function filterArsip() {
     let keyword = document.getElementById('searchArsip').value.toLowerCase();
-    let filtered = databaseArsip.filter(r => r.customer.toLowerCase().includes(keyword) || (r.no_nota && r.no_nota.toLowerCase().includes(keyword)) || r.items.some(it => it.desc.toLowerCase().includes(keyword)));
+    
+    // Semua pencarian dibungkus String() agar aman 100% dan tidak ada fungsi yang hilang
+    let filtered = databaseArsip.filter(r => 
+        String(r.customer).toLowerCase().includes(keyword) || 
+        (r.no_nota && String(r.no_nota).toLowerCase().includes(keyword)) || 
+        r.items.some(it => String(it.desc).toLowerCase().includes(keyword))
+    );
     renderTabelArsip(filtered);
 }
 
