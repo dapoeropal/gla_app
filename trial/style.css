@@ -44,17 +44,19 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body);
 
 .row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; } .col { flex: 1; min-width: 150px; }
 label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted); }
-input, select, textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-input); color: var(--text-main); font-family: inherit; font-size: 0.95rem; }
-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15); }
+
+/* Input diperbesar sedikit agar jari gampang menekan di HP */
+input, select, textarea { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-input); color: var(--text-main); font-family: inherit; font-size: 0.95rem; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15); }
 
 .btn { padding: 12px 20px; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: white; transition: 0.2s; }
 .btn-success { background: var(--success); width: 100%; } .btn-primary { background: var(--primary); width: 100%; } .btn-warning { background: var(--warning); width: 100%; } .btn-danger { background: var(--danger); width: 100%; }
 .action-btn { background: var(--primary); color: white; border: none; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin: 2px; }
 
-/* TABEL RESPONSIVE */
-.table-container { width: 100%; overflow-x: auto; }
-table.tabel-ui { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 600px; }
-table.tabel-ui th { background: var(--bg-table-head); padding: 12px; text-align: left; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; border-bottom: 1px solid var(--border-main); }
+/* TABEL RESPONSIVE & SMOOTH SCROLL */
+.table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 15px; border-radius: var(--radius-sm); }
+table.tabel-ui { width: 100%; border-collapse: collapse; min-width: 700px; }
+table.tabel-ui th { background: var(--bg-table-head); padding: 12px; text-align: left; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; border-bottom: 1px solid var(--border-main); white-space: nowrap; }
 table.tabel-ui td { padding: 10px 12px; border-bottom: 1px solid var(--border-light); font-size: 0.9rem; vertical-align: top; }
 
 .total-box { background: var(--bg-table-head); padding: 20px; border-radius: var(--radius-lg); border: 1.5px dashed var(--border-input); margin-top: 20px; }
@@ -62,34 +64,62 @@ table.tabel-ui td { padding: 10px 12px; border-bottom: 1px solid var(--border-li
 .total-box input { width: 200px; text-align: right; font-weight: bold; background: var(--bg-card); }
 #viewGrandTotal { background: var(--primary); color: white; font-size: 1.2rem; border: none; }
 
-/* KOMPONEN LAINNYA */
+/* MODAL / POPUP */
 .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 15px; }
 .modal-overlay.active { display: flex; }
 .modal-card { background: var(--bg-card); width: 100%; max-width: 500px; border-radius: var(--radius-lg); padding: 30px; border: 1px solid var(--border-light); }
-.autocomplete-list { display: none; position: absolute; background: var(--bg-card); border: 1px solid var(--border-main); width: calc(100% - 30px); max-height: 200px; overflow-y: auto; z-index: 100; border-radius: var(--radius-sm); box-shadow: var(--shadow-md); list-style: none; padding: 0; margin: 0; }
-.autocomplete-list li { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid var(--border-light); }
+
+/* AUTOCOMPLETE */
+.autocomplete-list { display: none; position: absolute; background: var(--bg-card); border: 1px solid var(--border-main); width: calc(100% - 30px); max-height: 200px; overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 100; border-radius: var(--radius-sm); box-shadow: var(--shadow-md); list-style: none; padding: 0; margin: 0; }
+.autocomplete-list li { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--border-light); }
 .autocomplete-list li:hover { background: var(--bg-hover); color: var(--primary); font-weight: bold; }
+
 .arsip-item-list { font-size: 0.8rem; margin-bottom: 4px; border-bottom: 1px solid var(--border-light); padding-bottom: 4px; }
 .badge-status { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: bold; margin-left: auto; }
 .status-baru { background: var(--primary); color: white; } .status-edit { background: var(--warning); color: #fff; }
 .warning-text { color: var(--danger); font-size: 0.75rem; font-weight: bold; display: none; margin-top: 5px; }
 
-/* ========================================== */
-/* RESPONSIVE LAYOUT HP (MOBILE) BOLO         */
-/* ========================================== */
-@media screen and (max-width: 768px) {
-    .main-wrapper { padding: 10px; flex-direction: column; }
-    .panel { padding: 20px; }
-    .left-panel, .right-panel { flex: 1 1 100%; max-width: 100%; }
-    .top-nav { flex-direction: column; text-align: center; }
-    .tab-menu { width: 100%; justify-content: center; }
-    .total-box .row { flex-direction: row; justify-content: space-between; width: 100%; }
-    .total-box input { width: 140px; }
-    .action-btn { width: 40px; height: 40px; } /* Besarkan tombol di HP agar mudah ditekan jari */
-}
 
 /* ========================================== */
-/* CETAK PRINT & WORD                         */
+/* JURUS SAKTI: UI/UX KHUSUS LAYAR HP BOLO    */
+/* ========================================== */
+@media screen and (max-width: 768px) {
+    /* 1. Header Lebih Ringkas Agar Tidak Makan Tempat */
+    .top-nav { padding: 12px 15px; flex-direction: column; gap: 10px; }
+    .top-nav h1 { font-size: 1.1rem; }
+    
+    /* Sembunyikan teks Admin Desa & CV GLA agar menu atas bersih */
+    #displayRole, #displayUser { display: none; } 
+    
+    /* 2. Menu Tab Penuh 1 Layar */
+    .tab-menu { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+    .tab-btn { padding: 8px 5px; font-size: 0.75rem; white-space: nowrap; }
+
+    /* 3. Panel & Jarak Form Dibuat Rapat */
+    .main-wrapper { padding: 10px; flex-direction: column; gap: 15px; }
+    .panel { padding: 20px 15px; border-radius: 12px; }
+    .left-panel, .right-panel { flex: 1 1 100%; max-width: 100%; }
+    
+    /* 4. Tumpuk Semua Form ke Bawah */
+    .row { flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .col { width: 100%; min-width: 100%; }
+
+    /* 5. Total Box Horizontal di HP */
+    .total-box { padding: 15px; }
+    .total-box .row { flex-direction: row; justify-content: space-between; flex-wrap: nowrap; margin-bottom: 15px; border-bottom: none; padding-bottom: 0; }
+    .total-box input { width: 140px; font-size: 0.9rem; padding: 8px 10px; }
+    
+    /* 6. Tombol Aksi di Tabel Diperbesar Untuk Jari */
+    .action-btn { width: 38px; height: 38px; font-size: 1rem; }
+    
+    /* 7. Modal Pop-up Anti Tertutup Keyboard */
+    .modal-overlay { padding: 10px; align-items: flex-start; padding-top: 30px; }
+    .modal-card { padding: 20px; max-height: 90vh; overflow-y: auto; }
+}
+
+
+/* ========================================== */
+/* CETAK PRINT & WORD (TETAP AMAN)            */
 /* ========================================== */
 #areaCetak { display: none; }
 @media print {
