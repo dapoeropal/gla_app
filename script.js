@@ -5,7 +5,7 @@ let stateItems = [];
 let editIndex = -1; 
 let databaseArsip = []; 
 let listCustomerDb = []; 
-let databaseUsers = [];
+let databaseUsers = []; // <-- Ini yang sempat hilang Bolo!
 
 function formatRp(angka) { return new Intl.NumberFormat('id-ID').format(Math.round(angka)); }
 function penyebut(nilai) {
@@ -16,48 +16,79 @@ function penyebut(nilai) {
 }
 
 // ==========================================
-// 1. SISTEM LOGIN (DINONAKTIFKAN / BYPASS BOLO)
+// 1. SISTEM LOGIN & OTORISASI BOLO
 // ==========================================
 async function eksekusiLogin() {
-    // Tombol login langsung diarahkan masuk tanpa cek server
-    initApp();
+    let u = document.getElementById('loginUser').value.trim();
+    let p = document.getElementById('loginPass').value.trim();
+    if(!u || !p) return Swal.fire('Kosong', 'Username dan Password wajib diisi!', 'warning');
+    
+    Swal.fire({ title: 'Otentikasi...', didOpen: () => { Swal.showLoading() } });
+    try {
+        let res = await fetch(URL_GAS, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // <-- Jurus Anti-CORS Bolo
+            body: JSON.stringify({ action: "login", username: u, password: p }) 
+        });
+        
+        let text = await res.text(); 
+        let data;
+        
+        try {
+            data = JSON.parse(text); // Coba terjemahkan balasan dari Google
+        } catch(err) {
+            console.error("Error Server:", text);
+            return Swal.fire('Error Server', 'Google Script belum di-Deploy Versi Baru! Cek langkah 1 Bolo.', 'error');
+        }
+
+        if(data.success) {
+            localStorage.setItem('gla_role', data.role);
+            localStorage.setItem('gla_user', data.username);
+            Swal.fire('Berhasil', 'Selamat datang ' + data.username, 'success');
+            initApp(); 
+        } else {
+            Swal.fire('Gagal', data.message, 'error');
+        }
+    } catch(e) { Swal.fire('Error', 'Gagal koneksi ke server. Pastikan HP ada kuotanya Bolo.', 'error'); }
 }
 
 function eksekusiLogout() {
-    Swal.fire('Info', 'Sistem Login saat ini sedang dinonaktifkan sementara Bolo!', 'info');
+    Swal.fire({ title: 'Keluar Aplikasi?', icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Keluar' }).then((result) => {
+        if (result.isConfirmed) {
+            localStorage.removeItem('gla_role'); localStorage.removeItem('gla_user');
+            window.location.reload();
+        }
+    });
 }
 
 function initApp() {
-    // --- JURUS BYPASS LOGIN: LANGSUNG JADI ADMIN ---
-    document.getElementById('pageLogin').style.display = 'none';
-    document.getElementById('appContainer').style.display = 'block';
+    let role = localStorage.getItem('gla_role');
+    let user = localStorage.getItem('gla_user');
     
-    document.getElementById('displayRole').innerText = "Admin (Bypass)";
-    document.getElementById('displayUser').innerText = "Halo, Admin";
-    
-    // Buka semua menu termasuk tab Pengaturan
-    document.getElementById('tabPengaturan').style.display = 'inline-block';
-    
-    switchTab('generator');
-    muatDataArsip(); 
-    
-    // Muat Tema Gelap/Terang
-    if(localStorage.getItem('temaGLA') === 'gelap') { 
-        document.body.classList.add('dark-mode'); 
-        let iconTema = document.getElementById('iconTema');
-        if(iconTema) {
-            iconTema.classList.replace('fa-moon', 'fa-sun'); 
-            iconTema.style.color = '#fbbf24'; 
+    if(role) { 
+        document.getElementById('pageLogin').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'block';
+        document.getElementById('displayRole').innerText = role;
+        document.getElementById('displayUser').innerText = "Halo, " + user;
+        
+        if(role === 'Admin') {
+            document.getElementById('tabPengaturan').style.display = 'inline-block';
+            muatDataUser(); 
+        } else {
+            document.getElementById('tabPengaturan').style.display = 'none';
         }
+        switchTab('generator');
+        muatDataArsip();
+    } else { 
+        document.getElementById('pageLogin').style.display = 'flex';
+        document.getElementById('appContainer').style.display = 'none';
     }
-    
-    // Set Tanggal hari ini
-    let tglSurat = document.getElementById('tglSurat');
-    if(tglSurat) tglSurat.valueAsDate = new Date();
+    if(localStorage.getItem('temaGLA') === 'gelap') { document.body.classList.add('dark-mode'); document.getElementById('iconTema').classList.replace('fa-moon', 'fa-sun'); document.getElementById('iconTema').style.color = '#fbbf24'; }
+    document.getElementById('tglSurat').valueAsDate = new Date();
 }
 
 // ==========================================
-// 2. MANAJEMEN USER (TETAP ADA TAPI TANPA PENGARUH LOGIN)
+// 2. MANAJEMEN USER (KHUSUS ADMIN)
 // ==========================================
 async function muatDataUser() {
     try {
@@ -145,13 +176,9 @@ async function simpanAtauUpdateDB() {
     if(!data.no_kwitansi || !data.customer || stateItems.length === 0) return Swal.fire('Belum Lengkap', 'Customer, No Kwitansi, dan Item harus diisi.', 'warning');
     const idArsip = document.getElementById('editIdArsip').value; const action = idArsip ? 'update' : 'backup';
     Swal.fire({ title: 'Menyimpan ke Google Sheets...', didOpen: () => { Swal.showLoading() } });
-    
     try {
         let payload = { action: action, data: data }; if (idArsip) payload.id = idArsip;
-        
-        // Kita gunakan mode 'no-cors' agar tidak terblokir saat push data (Khusus Save)
-        await fetch(URL_GAS, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        
+        await fetch(URL_GAS, { method: 'POST', body: JSON.stringify(payload) });
         Swal.fire('Sukses!', 'Database berhasil disimpan!', 'success');
         if (!idArsip) { document.getElementById('editIdArsip').value = "TERSIMPAN"; setUIStatus("Edit Arsip"); }
         muatDataArsip(); 
@@ -161,8 +188,7 @@ async function simpanAtauUpdateDB() {
 async function muatDataArsip() {
     document.getElementById('bodyArsip').innerHTML = '<tr><td colspan="6" style="text-align:center; padding:50px;">Menarik data... <i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
     try {
-        const response = await fetch(URL_GAS + "?action=get_arsip"); 
-        const res = await response.json();
+        const response = await fetch(URL_GAS + "?action=get_arsip"); const res = await response.json();
         if(res.success && res.data) {
             let grouped = {};
             res.data.forEach(row => {
@@ -177,7 +203,7 @@ async function muatDataArsip() {
             renderTabelArsip(databaseArsip);
             listCustomerDb = [...new Set(databaseArsip.map(item => item.customer))];
         }
-    } catch(e) { document.getElementById('bodyArsip').innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Data dari server diblokir CORS. Aplikasi tetap bisa dipakai untuk Generator.</td></tr>'; }
+    } catch(e) { document.getElementById('bodyArsip').innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Gagal koneksi ke server.</td></tr>'; }
 }
 
 function renderTabelArsip(dataArray) {
@@ -218,13 +244,7 @@ function editArsip(idx) { let d = databaseArsip[idx]; isiFormDariArsip(d); docum
 
 async function hapusArsip(id_transaksi) {
     Swal.fire({ title: 'Yakin Hapus?', text: "Data tidak bisa dikembalikan!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Ya, Hapus' }).then(async (result) => {
-        if (result.isConfirmed) { 
-            Swal.fire({ title: 'Menghapus...', didOpen: () => { Swal.showLoading() } }); 
-            // Pakai mode no-cors khusus untuk Hapus agar lancar
-            await fetch(URL_GAS, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "delete", id: id_transaksi }) }); 
-            Swal.fire('Terhapus!', 'Baris arsip telah dihapus.', 'success'); 
-            muatDataArsip(); 
-        }
+        if (result.isConfirmed) { Swal.fire({ title: 'Menghapus...', didOpen: () => { Swal.showLoading() } }); await fetch(URL_GAS, { method: 'POST', body: JSON.stringify({ action: "delete", id: id_transaksi }) }); Swal.fire('Terhapus!', 'Baris arsip telah dihapus.', 'success'); muatDataArsip(); }
     });
 }
 
@@ -246,6 +266,22 @@ function siapkanCetakLaluPrint() {
     window.print();
 }
 
+function kosongkanForm() { document.querySelectorAll('input[type="text"]:not(#customer), textarea').forEach(el => el.value = ''); document.getElementById('customer').value = ''; document.getElementById('editIdArsip').value = ''; stateItems = []; document.querySelector('input[value="exclude"]').checked = true; setUIStatus("Buat Baru"); document.getElementById('warningNota').style.display = 'none'; renderTabelUI(); }
+
+function switchTab(target) {
+    document.getElementById('pageGenerator').style.display = target === 'generator' ? 'flex' : 'none'; document.getElementById('pageArsip').style.display = target === 'arsip' ? 'flex' : 'none'; document.getElementById('pagePengaturan').style.display = target === 'pengaturan' ? 'flex' : 'none';
+    document.getElementById('tabGenerator').classList.toggle('active', target === 'generator'); document.getElementById('tabArsip').classList.toggle('active', target === 'arsip'); document.getElementById('tabPengaturan').classList.toggle('active', target === 'pengaturan');
+    if(target === 'arsip' && databaseArsip.length === 0) muatDataArsip();
+    if(target === 'pengaturan' && databaseUsers.length === 0) muatDataUser();
+}
+
+function filterCustomer() { let input = document.getElementById('customer').value.toLowerCase(); let ul = document.getElementById('listCustomer'); ul.innerHTML = ''; if(!input) return; let filtered = listCustomerDb.filter(c => c.toLowerCase().includes(input)); filtered.forEach(cust => { ul.innerHTML += `<li onclick="pilihCustomer('${cust}')">${cust}</li>`; }); }
+function pilihCustomer(val) { document.getElementById('customer').value = val; document.getElementById('listCustomer').style.display = 'none'; }
+function toggleTema() { document.body.classList.toggle('dark-mode'); let icon = document.getElementById('iconTema'); if (document.body.classList.contains('dark-mode')) { icon.classList.replace('fa-moon', 'fa-sun'); icon.style.color = '#fbbf24'; localStorage.setItem('temaGLA', 'gelap'); } else { icon.classList.replace('fa-sun', 'fa-moon'); icon.style.color = 'var(--text-muted)'; localStorage.setItem('temaGLA', 'terang'); } }
+
+// ==========================================
+// JURUS EXPORT KE WORD (KERTAS F4 / FOLIO)
+// ==========================================
 function exportWordAsFolio() {
     if(stateItems.length === 0) return Swal.fire('Kosong', 'Keranjang produk tidak boleh kosong.', 'warning');
     
@@ -322,19 +358,6 @@ function exportWordAsFolio() {
     document.body.removeChild(downloadLink);
 }
 
-function kosongkanForm() { document.querySelectorAll('input[type="text"]:not(#customer), textarea').forEach(el => el.value = ''); document.getElementById('customer').value = ''; document.getElementById('editIdArsip').value = ''; stateItems = []; document.querySelector('input[value="exclude"]').checked = true; setUIStatus("Buat Baru"); document.getElementById('warningNota').style.display = 'none'; renderTabelUI(); }
-
-function switchTab(target) {
-    document.getElementById('pageGenerator').style.display = target === 'generator' ? 'flex' : 'none'; document.getElementById('pageArsip').style.display = target === 'arsip' ? 'flex' : 'none'; document.getElementById('pagePengaturan').style.display = target === 'pengaturan' ? 'flex' : 'none';
-    document.getElementById('tabGenerator').classList.toggle('active', target === 'generator'); document.getElementById('tabArsip').classList.toggle('active', target === 'arsip'); document.getElementById('tabPengaturan').classList.toggle('active', target === 'pengaturan');
-    if(target === 'arsip' && databaseArsip.length === 0) muatDataArsip();
-    if(target === 'pengaturan' && databaseUsers.length === 0) muatDataUser();
-}
-
-function filterCustomer() { let input = document.getElementById('customer').value.toLowerCase(); let ul = document.getElementById('listCustomer'); ul.innerHTML = ''; if(!input) return; let filtered = listCustomerDb.filter(c => c.toLowerCase().includes(input)); filtered.forEach(cust => { ul.innerHTML += `<li onclick="pilihCustomer('${cust}')">${cust}</li>`; }); }
-function pilihCustomer(val) { document.getElementById('customer').value = val; document.getElementById('listCustomer').style.display = 'none'; }
-function toggleTema() { document.body.classList.toggle('dark-mode'); let icon = document.getElementById('iconTema'); if (document.body.classList.contains('dark-mode')) { icon.classList.replace('fa-moon', 'fa-sun'); icon.style.color = '#fbbf24'; localStorage.setItem('temaGLA', 'gelap'); } else { icon.classList.replace('fa-sun', 'fa-moon'); icon.style.color = 'var(--text-muted)'; localStorage.setItem('temaGLA', 'terang'); } }
-
-// SAAT PERTAMA KALI HALAMAN DIBUKA, LANGSUNG MASUK!
+// Saat Pertama Buka Web: Cek apakah sudah login / belum (JANGAN SAMPAI TERTIMPA!)
 window.onload = initApp;
 document.addEventListener('click', function(e) { if(e.target.id !== 'customer') document.getElementById('listCustomer').style.display = 'none'; });
