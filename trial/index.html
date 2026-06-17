@@ -18,7 +18,6 @@
         <div class="login-box">
             <h1 style="color: var(--primary); margin-top: 0;"><i class="fa-solid fa-file-invoice-dollar"></i> GLA System</h1>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Silakan login untuk mengakses sistem</p>
-            
             <div style="text-align: left;">
                 <label>Username</label>
                 <input type="text" id="loginUser" placeholder="Masukkan username" style="margin-bottom: 15px;">
@@ -71,6 +70,7 @@
 
                 <div class="section-header"><i class="fa-solid fa-building-user"></i> 2. Data Customer</div>
                 
+                <!-- BLOK CUSTOMER YANG SUDAH DIPERBAIKI -->
                 <div class="row" style="margin-bottom: 15px; position: relative;">
                     <div class="col">
                         <label>Nama Customer</label>
@@ -91,6 +91,8 @@
                         <input type="text" id="upCustomer" value="Bagian Keuangan" placeholder="Contoh: Bpk Budi">
                     </div>
                 </div>
+                <!-- AKHIR BLOK CUSTOMER -->
+
                 <button id="btnSimpan" class="btn btn-success" onclick="simpanAtauUpdateDB()" style="margin-top: 15px;"><i class="fa-solid fa-cloud-arrow-up"></i> Simpan Database Sheet</button>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button class="btn btn-primary" onclick="siapkanCetakLaluPrint()"><i class="fa-solid fa-file-pdf"></i> Cetak PDF</button>
@@ -121,7 +123,7 @@
                     </div>
                     <div class="row"><div style="width: 180px;">Subtotal (DPP) :</div><input type="text" id="viewDpp" readonly></div>
                     <div class="row"><div style="width: 180px; display: flex; justify-content: flex-end; gap: 8px;"><label style="cursor: pointer; display: flex; align-items: center; gap: 5px;"><input type="checkbox" id="pakaiPPN" onchange="kalkulasiTotal()" style="width:16px; height:16px;"> + PPN 11%</label></div><input type="text" id="viewPpn" readonly></div>
-                    <div class="row"><div style="width: 180px; display: flex; justify-content: flex-end; gap: 8px;"><label style="cursor: pointer; display: flex; align-items: center; gap: 5px;"><input type="checkbox" id="pakaiPPH" onchange="kalkulasiTotal()" style="width:16px; height:16px;"> - PPh</label></div><input type="number" id="inputPph" value="0" oninput="kalkulasiTotal()"></div>
+                    <div class="row"><div style="width: 180px; display: flex; justify-content: flex-end; gap: 8px;"><label style="cursor: pointer; display: flex; align-items: center; gap: 5px;"><input type="checkbox" id="pakaiPPH" onchange="kalkulasiTotal()" style="width:16px; height:16px;"> - PPh</label></div><input type="number" id="inputPph" value="0" oninput="kalkulasiTotal()" style="text-align: right; background: var(--bg-input);"></div>
                     <div class="row" style="border-top: 1px solid var(--border-input); padding-top: 15px; margin-top: 15px;"><div style="width: 180px; font-weight: 900; font-size: 1rem;">GRAND TOTAL :</div><input type="text" id="viewGrandTotal" readonly></div>
                 </div>
             </div>
@@ -173,24 +175,7 @@
         </div>
     </div>
 
-    <div id="modalUser" class="modal-overlay">
-        <div class="modal-card">
-            <h3 style="margin-top: 0; color: var(--primary);"><i class="fa-solid fa-user-shield"></i> Form Akses User</h3>
-            <input type="hidden" id="modUserId">
-            <label>Username</label><input type="text" id="modUsername" style="margin-bottom: 12px;">
-            <label>Password</label><input type="text" id="modPassword" style="margin-bottom: 12px;">
-            <label>Hak Akses</label>
-            <select id="modRole" style="margin-bottom: 25px;">
-                <option value="Admin">Admin (Bisa Semua Fitur)</option>
-                <option value="User">User (Hanya Form & Arsip)</option>
-            </select>
-            <div class="row" style="margin-bottom: 0;">
-                <button class="btn" style="flex: 1; background: var(--border-input); color: var(--text-heading);" onclick="document.getElementById('modalUser').classList.remove('active')">Batal</button>
-                <button class="btn btn-primary" style="flex: 2; margin-top: 0;" onclick="simpanUserModal()"><i class="fa-solid fa-check"></i> Simpan User</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- AREA RENDER CETAK -->
     <div id="areaCetak">
         <div class="kertas">
             <table class="kop-table"><tr><td style="width: 15%; font-size: 28pt; font-family: Arial; font-weight: 900; vertical-align: top;">GLA</td><td style="text-align: center;"><div class="kop-title">CV. GATRATRI LUMINTU ABADI</div><div style="font-size: 10pt;">Ds. Megawon RT.006 RW.002, Megawon, Jati Kudus - Jawa Tengah</div><div style="font-size: 10pt;">Email: gatratrilumintuabadi@gmail.com | Telp: 085199643611</div></td></tr></table>
@@ -213,7 +198,6 @@
     </div>
 
     <script src="script.js"></script>
-    
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
