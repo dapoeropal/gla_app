@@ -118,18 +118,18 @@ function kalkulasiTotal() {
     document.getElementById('viewDpp').value = formatRp(dpp); document.getElementById('viewPpn').value = formatRp(ppn); document.getElementById('viewGrandTotal').value = formatRp(grandTotal);
 }
 
-// JURUS KOMBINASI FIELD CUSTOMER BOLO
+// JURUS KOMBINASI FIELD CUSTOMER
 function kumpulkanData() {
     let alamatRaw = document.getElementById('alamatCustomer').value || '';
     let upRaw = document.getElementById('upCustomer').value || '';
-    let gabunganLokasi = alamatRaw + "|||" + upRaw; // Disamarkan dengan separator rahasia
+    let gabunganLokasi = alamatRaw + "|||" + upRaw; 
 
     return {
         tanggal: document.getElementById('tglSurat').value, 
         no_kwitansi: document.getElementById('noKwitansi').value, 
         no_nota: document.getElementById('noNota').value, 
         customer: document.getElementById('customer').value, 
-        kegiatan: gabunganLokasi, // Data alamat & UP masuk ke lorong Kegiatan Server
+        kegiatan: gabunganLokasi, 
         pakai_ppn: document.getElementById('pakaiPPN').checked, 
         pakai_pph: document.getElementById('pakaiPPH').checked, 
         nominal_pph: document.getElementById('inputPph').value,
@@ -192,11 +192,12 @@ async function muatDataArsip() {
 function renderTabelArsip(dataArray) {
     let tbody = document.getElementById('bodyArsip'); tbody.innerHTML = '';
     if(dataArray.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada arsip.</td></tr>'; return; }
-    dataArray.forEach((row, index) => {
+    dataArray.forEach((row) => {
         let listBarangHtml = row.items.map(it => `<div class="arsip-item-list"><div style="display:flex; justify-content:space-between;"><span>&bull; ${it.desc} <span style="color:var(--text-muted); font-size:0.75rem;">(${it.qty} ${it.satuan})</span></span><span style="font-weight:600;">${formatRp(it.total)}</span></div></div>`).join('');
-        // Alamat langsung ditampilkan di tabel Arsip
         let teksAlamat = row.alamat_asli ? row.alamat_asli : '-';
-        tbody.innerHTML += `<tr><td style="font-weight:600;">${row.tanggal}</td><td><div style="font-weight:bold;">Kwi: ${row.no_kwitansi || '-'}</div><div style="font-size:0.75rem; color:var(--text-muted);">Nota: ${row.no_nota || '-'}</div></td><td><div style="font-weight:bold; color:var(--primary);">${row.customer.toUpperCase()}</div><div style="font-size:0.75rem; color:var(--text-muted); margin-top: 4px;">${teksAlamat}</div></td><td>${listBarangHtml}</td><td style="text-align:right; font-weight:bold; font-size:1.1rem; color:var(--text-heading);">${formatRp(row.grand_total)}</td><td style="text-align:center; display:flex; gap:5px; flex-wrap:wrap; justify-content:center;"><button class="action-btn" style="background:var(--success);" onclick="copyArsip('${index}')" title="Copy menjadi Nota Baru"><i class="fa-regular fa-copy"></i></button> <button class="action-btn" style="background:var(--warning);" onclick="editArsip('${index}')" title="Edit Data"><i class="fa-solid fa-pen"></i></button> <button class="action-btn" style="background:var(--danger);" onclick="hapusArsip('${row.id_transaksi}')" title="Hapus"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+        
+        // JURUS ANTI MACET: Ganti '${index}' dengan '${row.id_transaksi}'
+        tbody.innerHTML += `<tr><td style="font-weight:600;">${row.tanggal}</td><td><div style="font-weight:bold;">Kwi: ${row.no_kwitansi || '-'}</div><div style="font-size:0.75rem; color:var(--text-muted);">Nota: ${row.no_nota || '-'}</div></td><td><div style="font-weight:bold; color:var(--primary);">${row.customer.toUpperCase()}</div><div style="font-size:0.75rem; color:var(--text-muted); margin-top: 4px;">${teksAlamat}</div></td><td>${listBarangHtml}</td><td style="text-align:right; font-weight:bold; font-size:1.1rem; color:var(--text-heading);">${formatRp(row.grand_total)}</td><td style="text-align:center; display:flex; gap:5px; flex-wrap:wrap; justify-content:center;"><button class="action-btn" style="background:var(--success);" onclick="copyArsip('${row.id_transaksi}')" title="Copy menjadi Nota Baru"><i class="fa-regular fa-copy"></i></button> <button class="action-btn" style="background:var(--warning);" onclick="editArsip('${row.id_transaksi}')" title="Edit Data"><i class="fa-solid fa-pen"></i></button> <button class="action-btn" style="background:var(--danger);" onclick="hapusArsip('${row.id_transaksi}')" title="Hapus"><i class="fa-solid fa-trash"></i></button></td></tr>`;
     });
 }
 
@@ -217,13 +218,19 @@ function setUIStatus(mode) {
     }
 }
 
+// JURUS PENGAMAN FORM BOLO
 function isiFormDariArsip(d) {
     document.getElementById('tglSurat').value = d.tanggal; 
     document.getElementById('noKwitansi').value = d.no_kwitansi; 
     document.getElementById('noNota').value = d.no_nota; 
     document.getElementById('customer').value = d.customer; 
-    document.getElementById('alamatCustomer').value = d.alamat_asli || '';
-    document.getElementById('upCustomer').value = d.up_asli || '';
+    
+    // Keamanan jika elemen Alamat/UP tidak ketemu
+    let elAlamat = document.getElementById('alamatCustomer');
+    if(elAlamat) elAlamat.value = d.alamat_asli || '';
+    
+    let elUp = document.getElementById('upCustomer');
+    if(elUp) elUp.value = d.up_asli || 'Bagian Keuangan';
     
     document.getElementById('pakaiPPN').checked = d.pakai_ppn; 
     document.getElementById('pakaiPPH').checked = d.pakai_pph; 
@@ -232,8 +239,33 @@ function isiFormDariArsip(d) {
     stateItems = JSON.parse(JSON.stringify(d.items)); 
 }
 
-function copyArsip(idx) { let d = databaseArsip[idx]; isiFormDariArsip(d); document.getElementById('editIdArsip').value = ''; setUIStatus("Copy Baru"); cekHistoriNota(); renderTabelUI(); switchTab('generator'); Swal.fire({ toast:true, position:'top-end', icon:'success', title:'Tercopy! Siap diedit jadi Nota Baru', showConfirmButton:false, timer:2500 }); }
-function editArsip(idx) { let d = databaseArsip[idx]; isiFormDariArsip(d); document.getElementById('editIdArsip').value = d.id_transaksi; setUIStatus("Edit Arsip"); document.getElementById('warningNota').style.display = 'none'; renderTabelUI(); switchTab('generator'); Swal.fire({ toast:true, position:'top-end', icon:'info', title:'Data Siap Diedit!', showConfirmButton:false, timer:2000 }); }
+// JURUS PENCARIAN ID TRANSAKSI BOLO (KEBAL TIPE DATA)
+function copyArsip(id_transaksi) { 
+    // Kita paksa ubah jadi String() agar Angka dan Teks bisa berjodoh
+    let d = databaseArsip.find(x => String(x.id_transaksi) === String(id_transaksi));
+    if(!d) return Swal.fire('Gagal', 'Data tidak ditemukan di memori Bolo!', 'error');
+    
+    isiFormDariArsip(d); 
+    document.getElementById('editIdArsip').value = ''; 
+    setUIStatus("Copy Baru"); 
+    cekHistoriNota(); 
+    renderTabelUI(); 
+    switchTab('generator'); 
+    Swal.fire({ toast:true, position:'top-end', icon:'success', title:'Tercopy! Siap diedit jadi Nota Baru', showConfirmButton:false, timer:2500 }); 
+}
+
+function editArsip(id_transaksi) { 
+    let d = databaseArsip.find(x => String(x.id_transaksi) === String(id_transaksi));
+    if(!d) return Swal.fire('Gagal', 'Data tidak ditemukan di memori Bolo!', 'error');
+    
+    isiFormDariArsip(d); 
+    document.getElementById('editIdArsip').value = d.id_transaksi; 
+    setUIStatus("Edit Arsip"); 
+    document.getElementById('warningNota').style.display = 'none'; 
+    renderTabelUI(); 
+    switchTab('generator'); 
+    Swal.fire({ toast:true, position:'top-end', icon:'info', title:'Data Siap Diedit!', showConfirmButton:false, timer:2000 }); 
+}
 
 async function hapusArsip(id_transaksi) {
     Swal.fire({ title: 'Yakin Hapus?', text: "Data tidak bisa dikembalikan!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Ya, Hapus' }).then(async (result) => {
@@ -249,7 +281,6 @@ async function hapusArsip(id_transaksi) {
 function siapkanCetakLaluPrint() {
     if(stateItems.length === 0) return Swal.fire('Kosong', 'Keranjang produk tidak boleh kosong.', 'warning');
     
-    // TEMBAK DATA CUSTOMER BARU KE LAYAR CETAK PDF BOLO
     document.getElementById('prKwitansi').innerText = document.getElementById('noKwitansi').value || ""; 
     document.getElementById('prCustomer').innerText = document.getElementById('customer').value; 
     document.getElementById('prLokasi').innerText = document.getElementById('alamatCustomer').value || "-";
@@ -346,7 +377,23 @@ function exportWordAsFolio() {
     document.body.removeChild(downloadLink);
 }
 
-function kosongkanForm() { document.querySelectorAll('input[type="text"]:not(#customer), textarea').forEach(el => el.value = ''); document.getElementById('customer').value = ''; document.getElementById('alamatCustomer').value = ''; document.getElementById('editIdArsip').value = ''; document.getElementById('upCustomer').value = 'Bagian Keuangan'; stateItems = []; document.querySelector('input[value="exclude"]').checked = true; setUIStatus("Buat Baru"); document.getElementById('warningNota').style.display = 'none'; renderTabelUI(); }
+function kosongkanForm() { 
+    document.querySelectorAll('input[type="text"]:not(#customer), textarea').forEach(el => el.value = ''); 
+    document.getElementById('customer').value = ''; 
+    
+    let elAlamat = document.getElementById('alamatCustomer');
+    if(elAlamat) elAlamat.value = ''; 
+    
+    let elUp = document.getElementById('upCustomer');
+    if(elUp) elUp.value = 'Bagian Keuangan'; 
+    
+    document.getElementById('editIdArsip').value = ''; 
+    stateItems = []; 
+    document.querySelector('input[value="exclude"]').checked = true; 
+    setUIStatus("Buat Baru"); 
+    document.getElementById('warningNota').style.display = 'none'; 
+    renderTabelUI(); 
+}
 
 function switchTab(target) {
     document.getElementById('pageGenerator').style.display = target === 'generator' ? 'flex' : 'none'; document.getElementById('pageArsip').style.display = target === 'arsip' ? 'flex' : 'none'; document.getElementById('pagePengaturan').style.display = target === 'pengaturan' ? 'flex' : 'none';
