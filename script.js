@@ -1,5 +1,5 @@
 // GANTI INI DENGAN URL APPS SCRIPT-MU!
-const URL_GAS = "https://script.google.com/macros/s/AKfycbz_XS1GLAHU5h8ZK5hm1kBOekLOkOIVxlaiaa_sT6DSolroDKPfOsT4AsLKHTWMGQpX/exec";
+const URL_GAS = "https://script.google.com/macros/s/AKfycbwQDbdvUkEoD0w1jhahbpsJFEFadR82H7KAn_5tutcuFy8bwZeOD_tTqLSzJ_aSEDgW/exec";
 
 let stateItems = []; 
 let editIndex = -1; 
@@ -15,15 +15,12 @@ function penyebut(nilai) {
     return temp;
 }
 
-// JURUS ANTI TANGGAL ANEH GOOGLE SHEETS BOLO
 function perbaikiTanggalISO(tglStr) {
     if (!tglStr) return "";
     try {
         let d = new Date(tglStr);
-        if (isNaN(d.getTime())) return tglStr; // Jika sudah berupa teks biasa, kembalikan aslinya
-        let yyyy = d.getFullYear();
-        let mm = String(d.getMonth() + 1).padStart(2, '0');
-        let dd = String(d.getDate()).padStart(2, '0');
+        if (isNaN(d.getTime())) return tglStr; 
+        let yyyy = d.getFullYear(); let mm = String(d.getMonth() + 1).padStart(2, '0'); let dd = String(d.getDate()).padStart(2, '0');
         return `${yyyy}-${mm}-${dd}`;
     } catch(e) { return tglStr; }
 }
@@ -31,13 +28,8 @@ function perbaikiTanggalISO(tglStr) {
 // ==========================================
 // 1. SISTEM LOGIN (DINONAKTIFKAN / BYPASS BOLO)
 // ==========================================
-async function eksekusiLogin() {
-    initApp();
-}
-
-function eksekusiLogout() {
-    Swal.fire('Info', 'Sistem Login saat ini sedang dinonaktifkan sementara Bolo!', 'info');
-}
+async function eksekusiLogin() { initApp(); }
+function eksekusiLogout() { Swal.fire('Info', 'Sistem Login saat ini sedang dinonaktifkan sementara Bolo!', 'info'); }
 
 function initApp() {
     document.getElementById('pageLogin').style.display = 'none';
@@ -45,19 +37,14 @@ function initApp() {
     
     document.getElementById('displayRole').innerText = "Admin (Bypass)";
     document.getElementById('displayUser').innerText = "Halo, Admin";
-    
     document.getElementById('tabPengaturan').style.display = 'inline-block';
     
-    switchTab('generator');
-    muatDataArsip(); 
+    switchTab('generator'); muatDataArsip(); 
     
     if(localStorage.getItem('temaGLA') === 'gelap') { 
         document.body.classList.add('dark-mode'); 
         let iconTema = document.getElementById('iconTema');
-        if(iconTema) {
-            iconTema.classList.replace('fa-moon', 'fa-sun'); 
-            iconTema.style.color = '#fbbf24'; 
-        }
+        if(iconTema) { iconTema.classList.replace('fa-moon', 'fa-sun'); iconTema.style.color = '#fbbf24'; }
     }
     
     let tglSurat = document.getElementById('tglSurat');
@@ -69,11 +56,9 @@ function initApp() {
 // ==========================================
 async function muatDataUser() {
     try {
-        let res = await fetch(URL_GAS + "?action=get_users");
-        let d = await res.json();
+        let res = await fetch(URL_GAS + "?action=get_users"); let d = await res.json();
         if(d.success) {
-            databaseUsers = d.data;
-            let tbody = document.getElementById('bodyUsers'); tbody.innerHTML = '';
+            databaseUsers = d.data; let tbody = document.getElementById('bodyUsers'); tbody.innerHTML = '';
             databaseUsers.forEach(u => {
                 tbody.innerHTML += `<tr><td>${u.username}</td><td>${u.password}</td><td><span class="badge-status status-baru">${u.role}</span></td><td style="text-align:center;"><button class="action-btn" style="background:var(--warning);" onclick="editUser('${u.id}', '${u.username}', '${u.password}', '${u.role}')"><i class="fa-solid fa-pen"></i></button> <button class="action-btn" style="background:var(--danger);" onclick="hapusUser('${u.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             });
@@ -83,7 +68,6 @@ async function muatDataUser() {
 
 function bukaModalUser() { document.getElementById('modUserId').value = ''; document.getElementById('modUsername').value = ''; document.getElementById('modPassword').value = ''; document.getElementById('modRole').value = 'User'; document.getElementById('modalUser').classList.add('active'); }
 function editUser(id, user, pass, role) { document.getElementById('modUserId').value = id; document.getElementById('modUsername').value = user; document.getElementById('modPassword').value = pass; document.getElementById('modRole').value = role; document.getElementById('modalUser').classList.add('active'); }
-
 async function simpanUserModal() {
     let id = document.getElementById('modUserId').value; let user = document.getElementById('modUsername').value; let pass = document.getElementById('modPassword').value; let role = document.getElementById('modRole').value;
     if(!user || !pass) return Swal.fire('Ops', 'Isi username dan password', 'warning');
@@ -91,13 +75,7 @@ async function simpanUserModal() {
     await fetch(URL_GAS, { method: 'POST', body: JSON.stringify({ action: "save_user", id, username: user, password: pass, role }) });
     Swal.fire('Berhasil', 'Data User disimpan', 'success'); document.getElementById('modalUser').classList.remove('active'); muatDataUser();
 }
-
-async function hapusUser(id) {
-    if(confirm('Yakin hapus user ini?')) {
-        await fetch(URL_GAS, { method: 'POST', body: JSON.stringify({ action: "delete_user", id }) });
-        muatDataUser();
-    }
-}
+async function hapusUser(id) { if(confirm('Yakin hapus user ini?')) { await fetch(URL_GAS, { method: 'POST', body: JSON.stringify({ action: "delete_user", id }) }); muatDataUser(); } }
 
 // ==========================================
 // 3. LOGIKA KERANJANG & ARSIP UTAMA
@@ -140,13 +118,18 @@ function kalkulasiTotal() {
     document.getElementById('viewDpp').value = formatRp(dpp); document.getElementById('viewPpn').value = formatRp(ppn); document.getElementById('viewGrandTotal').value = formatRp(grandTotal);
 }
 
+// JURUS KOMBINASI FIELD CUSTOMER
 function kumpulkanData() {
+    let alamatRaw = document.getElementById('alamatCustomer').value || '';
+    let upRaw = document.getElementById('upCustomer').value || '';
+    let gabunganLokasi = alamatRaw + "|||" + upRaw; 
+
     return {
         tanggal: document.getElementById('tglSurat').value, 
         no_kwitansi: document.getElementById('noKwitansi').value, 
         no_nota: document.getElementById('noNota').value, 
         customer: document.getElementById('customer').value, 
-        kegiatan: document.getElementById('kegiatan').value, 
+        kegiatan: gabunganLokasi, 
         pakai_ppn: document.getElementById('pakaiPPN').checked, 
         pakai_pph: document.getElementById('pakaiPPH').checked, 
         nominal_pph: document.getElementById('inputPph').value,
@@ -157,7 +140,6 @@ function kumpulkanData() {
 
 async function simpanAtauUpdateDB() {
     const data = kumpulkanData();
-    // Validasi Diperbarui Bolo: Tanggal dan No Kwitansi boleh kosong
     if(!data.customer || stateItems.length === 0) return Swal.fire('Belum Lengkap', 'Customer dan Keranjang Item wajib diisi.', 'warning');
     
     const idArsip = document.getElementById('editIdArsip').value; const action = idArsip ? 'update' : 'backup';
@@ -165,9 +147,7 @@ async function simpanAtauUpdateDB() {
     
     try {
         let payload = { action: action, data: data }; if (idArsip) payload.id = idArsip;
-        
         await fetch(URL_GAS, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        
         Swal.fire('Sukses!', 'Database berhasil disimpan!', 'success');
         if (!idArsip) { document.getElementById('editIdArsip').value = "TERSIMPAN"; setUIStatus("Edit Arsip"); }
         muatDataArsip(); 
@@ -183,20 +163,18 @@ async function muatDataArsip() {
             let grouped = {};
             res.data.forEach(row => {
                 let id = row.id_transaksi;
+
+                // PECAH KEMBALI ALAMAT DAN UP DARI SERVER BOLO
+                let kegiatanAsli = row.kegiatan || '';
+                let arrPisah = kegiatanAsli.split("|||");
+                let d_alamat = arrPisah[0] || '';
+                let d_up = arrPisah.length > 1 ? arrPisah[1] : '';
+
                 if(!grouped[id]) { 
                     grouped[id] = { 
-                        id_transaksi: id, 
-                        tanggal: perbaikiTanggalISO(row.tanggal), // Jurus Konversi ISO Tanggal Bolo
-                        no_nota: row.no_nota, 
-                        no_kwitansi: row.no_kwitansi, 
-                        customer: row.customer, 
-                        kegiatan: row.kegiatan, 
-                        grand_total: 0, 
-                        pakai_ppn: false, 
-                        pakai_pph: false, 
-                        nominal_pph: 0, 
-                        jenis_harga: 'exclude', 
-                        items: [] 
+                        id_transaksi: id, tanggal: perbaikiTanggalISO(row.tanggal), no_nota: row.no_nota, no_kwitansi: row.no_kwitansi, 
+                        customer: row.customer, alamat_asli: d_alamat, up_asli: d_up, grand_total: 0, 
+                        pakai_ppn: false, pakai_pph: false, nominal_pph: 0, jenis_harga: 'exclude', items: [] 
                     }; 
                 }
                 if (parseFloat(row.ppn) > 0) grouped[id].pakai_ppn = true;
@@ -214,9 +192,12 @@ async function muatDataArsip() {
 function renderTabelArsip(dataArray) {
     let tbody = document.getElementById('bodyArsip'); tbody.innerHTML = '';
     if(dataArray.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada arsip.</td></tr>'; return; }
-    dataArray.forEach((row, index) => {
+    dataArray.forEach((row) => {
         let listBarangHtml = row.items.map(it => `<div class="arsip-item-list"><div style="display:flex; justify-content:space-between;"><span>&bull; ${it.desc} <span style="color:var(--text-muted); font-size:0.75rem;">(${it.qty} ${it.satuan})</span></span><span style="font-weight:600;">${formatRp(it.total)}</span></div></div>`).join('');
-        tbody.innerHTML += `<tr><td style="font-weight:600;">${row.tanggal}</td><td><div style="font-weight:bold;">Kwi: ${row.no_kwitansi || '-'}</div><div style="font-size:0.75rem; color:var(--text-muted);">Nota: ${row.no_nota || '-'}</div></td><td><div style="font-weight:bold; color:var(--primary);">${row.customer.toUpperCase()}</div><div style="font-size:0.75rem; color:var(--text-muted);">${row.kegiatan || '-'}</div></td><td>${listBarangHtml}</td><td style="text-align:right; font-weight:bold; font-size:1.1rem; color:var(--text-heading);">${formatRp(row.grand_total)}</td><td style="text-align:center; display:flex; gap:5px; flex-wrap:wrap; justify-content:center;"><button class="action-btn" style="background:var(--success);" onclick="copyArsip('${index}')" title="Copy menjadi Nota Baru"><i class="fa-regular fa-copy"></i></button> <button class="action-btn" style="background:var(--warning);" onclick="editArsip('${index}')" title="Edit Data"><i class="fa-solid fa-pen"></i></button> <button class="action-btn" style="background:var(--danger);" onclick="hapusArsip('${row.id_transaksi}')" title="Hapus"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+        let teksAlamat = row.alamat_asli ? row.alamat_asli : '-';
+        
+        // JURUS ANTI MACET: Ganti '${index}' dengan '${row.id_transaksi}'
+        tbody.innerHTML += `<tr><td style="font-weight:600;">${row.tanggal}</td><td><div style="font-weight:bold;">Kwi: ${row.no_kwitansi || '-'}</div><div style="font-size:0.75rem; color:var(--text-muted);">Nota: ${row.no_nota || '-'}</div></td><td><div style="font-weight:bold; color:var(--primary);">${row.customer.toUpperCase()}</div><div style="font-size:0.75rem; color:var(--text-muted); margin-top: 4px;">${teksAlamat}</div></td><td>${listBarangHtml}</td><td style="text-align:right; font-weight:bold; font-size:1.1rem; color:var(--text-heading);">${formatRp(row.grand_total)}</td><td style="text-align:center; display:flex; gap:5px; flex-wrap:wrap; justify-content:center;"><button class="action-btn" style="background:var(--success);" onclick="copyArsip('${row.id_transaksi}')" title="Copy menjadi Nota Baru"><i class="fa-regular fa-copy"></i></button> <button class="action-btn" style="background:var(--warning);" onclick="editArsip('${row.id_transaksi}')" title="Edit Data"><i class="fa-solid fa-pen"></i></button> <button class="action-btn" style="background:var(--danger);" onclick="hapusArsip('${row.id_transaksi}')" title="Hapus"><i class="fa-solid fa-trash"></i></button></td></tr>`;
     });
 }
 
@@ -237,12 +218,20 @@ function setUIStatus(mode) {
     }
 }
 
+// JURUS PENGAMAN FORM BOLO
 function isiFormDariArsip(d) {
     document.getElementById('tglSurat').value = d.tanggal; 
     document.getElementById('noKwitansi').value = d.no_kwitansi; 
     document.getElementById('noNota').value = d.no_nota; 
     document.getElementById('customer').value = d.customer; 
-    document.getElementById('kegiatan').value = d.kegiatan;
+    
+    // Keamanan jika elemen Alamat/UP tidak ketemu
+    let elAlamat = document.getElementById('alamatCustomer');
+    if(elAlamat) elAlamat.value = d.alamat_asli || '';
+    
+    let elUp = document.getElementById('upCustomer');
+    if(elUp) elUp.value = d.up_asli || 'Bagian Keuangan';
+    
     document.getElementById('pakaiPPN').checked = d.pakai_ppn; 
     document.getElementById('pakaiPPH').checked = d.pakai_pph; 
     document.getElementById('inputPph').value = d.nominal_pph;
@@ -250,8 +239,32 @@ function isiFormDariArsip(d) {
     stateItems = JSON.parse(JSON.stringify(d.items)); 
 }
 
-function copyArsip(idx) { let d = databaseArsip[idx]; isiFormDariArsip(d); document.getElementById('editIdArsip').value = ''; setUIStatus("Copy Baru"); cekHistoriNota(); renderTabelUI(); switchTab('generator'); Swal.fire({ toast:true, position:'top-end', icon:'success', title:'Tercopy! Siap diedit jadi Nota Baru', showConfirmButton:false, timer:2500 }); }
-function editArsip(idx) { let d = databaseArsip[idx]; isiFormDariArsip(d); document.getElementById('editIdArsip').value = d.id_transaksi; setUIStatus("Edit Arsip"); document.getElementById('warningNota').style.display = 'none'; renderTabelUI(); switchTab('generator'); Swal.fire({ toast:true, position:'top-end', icon:'info', title:'Data Siap Diedit!', showConfirmButton:false, timer:2000 }); }
+// JURUS PENCARIAN ID TRANSAKSI BOLO
+function copyArsip(id_transaksi) { 
+    let d = databaseArsip.find(x => x.id_transaksi === id_transaksi);
+    if(!d) return;
+    
+    isiFormDariArsip(d); 
+    document.getElementById('editIdArsip').value = ''; 
+    setUIStatus("Copy Baru"); 
+    cekHistoriNota(); 
+    renderTabelUI(); 
+    switchTab('generator'); 
+    Swal.fire({ toast:true, position:'top-end', icon:'success', title:'Tercopy! Siap diedit jadi Nota Baru', showConfirmButton:false, timer:2500 }); 
+}
+
+function editArsip(id_transaksi) { 
+    let d = databaseArsip.find(x => x.id_transaksi === id_transaksi);
+    if(!d) return;
+    
+    isiFormDariArsip(d); 
+    document.getElementById('editIdArsip').value = d.id_transaksi; 
+    setUIStatus("Edit Arsip"); 
+    document.getElementById('warningNota').style.display = 'none'; 
+    renderTabelUI(); 
+    switchTab('generator'); 
+    Swal.fire({ toast:true, position:'top-end', icon:'info', title:'Data Siap Diedit!', showConfirmButton:false, timer:2000 }); 
+}
 
 async function hapusArsip(id_transaksi) {
     Swal.fire({ title: 'Yakin Hapus?', text: "Data tidak bisa dikembalikan!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Ya, Hapus' }).then(async (result) => {
@@ -267,10 +280,9 @@ async function hapusArsip(id_transaksi) {
 function siapkanCetakLaluPrint() {
     if(stateItems.length === 0) return Swal.fire('Kosong', 'Keranjang produk tidak boleh kosong.', 'warning');
     
-    // Tembak Data UI ke Layar Cetak
     document.getElementById('prKwitansi').innerText = document.getElementById('noKwitansi').value || ""; 
     document.getElementById('prCustomer').innerText = document.getElementById('customer').value; 
-    document.getElementById('prLokasi').innerText = document.getElementById('kegiatan').value;
+    document.getElementById('prLokasi').innerText = document.getElementById('alamatCustomer').value || "-";
     
     let listKwitansi = stateItems.map(it => `${it.desc} (${it.qty} ${it.satuan})`).join(', '); 
     document.getElementById('prListKwitansi').innerText = listKwitansi;
@@ -282,8 +294,13 @@ function siapkanCetakLaluPrint() {
     document.getElementById('prNota').innerText = document.getElementById('noNota').value; 
     document.getElementById('prCustomerNota').innerText = document.getElementById('customer').value;
     
+    let txtAlamat = document.getElementById('alamatCustomer').value;
+    let txtUp = document.getElementById('upCustomer').value;
+    document.getElementById('prAlamatNota').innerHTML = txtAlamat ? txtAlamat.replace(/\n/g, '<br>') : "Di Tempat";
+    document.getElementById('prUpNota').innerHTML = txtUp ? `<br>Up. <b>${txtUp}</b>` : "";
+
     let tbodyNota = document.getElementById('prBodyNota'); let htmlNota = '';
-    stateItems.forEach((it, i) => { htmlNota += `<tr><td style="text-align: center;">${i+1}</td><td><b>${it.desc.replace(/\n/g, '<br>')}</b><br><span style="font-size:8.5pt; color:#555;">Ref: ${document.getElementById('kegiatan').value}</span></td><td style="text-align: center;">${it.qty}</td><td style="text-align: center;">${it.satuan}</td><td style="text-align: right;">${formatRp(it.harga)}</td><td style="text-align: right; font-weight: bold;">${formatRp(it.total)}</td></tr>`; });
+    stateItems.forEach((it, i) => { htmlNota += `<tr><td style="text-align: center;">${i+1}</td><td><b>${it.desc.replace(/\n/g, '<br>')}</b></td><td style="text-align: center;">${it.qty}</td><td style="text-align: center;">${it.satuan}</td><td style="text-align: right;">${formatRp(it.harga)}</td><td style="text-align: right; font-weight: bold;">${formatRp(it.total)}</td></tr>`; });
     htmlNota += `<tr><td style="border-top:none; border-bottom:none; height:100px;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td></tr>`;
     let tp = hitunganTerakhir; 
     htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="font-weight:bold; text-align:right;">TOTAL HARGA</td><td style="font-weight:bold; text-align:right;">${formatRp(tp.grandTotal)}</td></tr>`; 
@@ -292,16 +309,13 @@ function siapkanCetakLaluPrint() {
     if(document.getElementById('pakaiPPH').checked) { htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="text-align:right;">PPH</td><td style="text-align:right; color:#b91c1c;">(${formatRp(tp.pph)})</td></tr>`; }
     tbodyNota.innerHTML = htmlNota;
     
-    // Tembak Tanggal, kosongkan jika user tidak mengisi
     let tglInp = document.getElementById('tglSurat').value;
     if(tglInp) { 
         let parts = tglInp.split('-'); 
         let strBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][parseInt(parts[1])-1]; 
         let finalTgl = `${parts[2]} ${strBulan} ${parts[0]}`; 
         document.querySelectorAll('.prTanggal').forEach(el => el.innerText = finalTgl); 
-    } else {
-        document.querySelectorAll('.prTanggal').forEach(el => el.innerText = ""); 
-    }
+    } else { document.querySelectorAll('.prTanggal').forEach(el => el.innerText = ""); }
     
     window.print();
 }
@@ -311,7 +325,7 @@ function exportWordAsFolio() {
     
     document.getElementById('prKwitansi').innerText = document.getElementById('noKwitansi').value || ""; 
     document.getElementById('prCustomer').innerText = document.getElementById('customer').value; 
-    document.getElementById('prLokasi').innerText = document.getElementById('kegiatan').value;
+    document.getElementById('prLokasi').innerText = document.getElementById('alamatCustomer').value || "-";
     let listKwitansi = stateItems.map(it => `${it.desc} (${it.qty} ${it.satuan})`).join(', '); 
     document.getElementById('prListKwitansi').innerText = listKwitansi;
     
@@ -321,8 +335,13 @@ function exportWordAsFolio() {
     document.getElementById('prNota').innerText = document.getElementById('noNota').value; 
     document.getElementById('prCustomerNota').innerText = document.getElementById('customer').value;
 
+    let txtAlamat = document.getElementById('alamatCustomer').value;
+    let txtUp = document.getElementById('upCustomer').value;
+    document.getElementById('prAlamatNota').innerHTML = txtAlamat ? txtAlamat.replace(/\n/g, '<br>') : "Di Tempat";
+    document.getElementById('prUpNota').innerHTML = txtUp ? `<br>Up. <b>${txtUp}</b>` : "";
+
     let tbodyNota = document.getElementById('prBodyNota'); let htmlNota = '';
-    stateItems.forEach((it, i) => { htmlNota += `<tr><td style="text-align: center;">${i+1}</td><td><b>${it.desc.replace(/\n/g, '<br>')}</b><br><span style="font-size:8.5pt; color:#555;">Ref: ${document.getElementById('kegiatan').value}</span></td><td style="text-align: center;">${it.qty}</td><td style="text-align: center;">${it.satuan}</td><td style="text-align: right;">${formatRp(it.harga)}</td><td style="text-align: right; font-weight: bold;">${formatRp(it.total)}</td></tr>`; });
+    stateItems.forEach((it, i) => { htmlNota += `<tr><td style="text-align: center;">${i+1}</td><td><b>${it.desc.replace(/\n/g, '<br>')}</b></td><td style="text-align: center;">${it.qty}</td><td style="text-align: center;">${it.satuan}</td><td style="text-align: right;">${formatRp(it.harga)}</td><td style="text-align: right; font-weight: bold;">${formatRp(it.total)}</td></tr>`; });
     htmlNota += `<tr><td style="border-top:none; border-bottom:none; height:100px;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td></tr>`;
     
     let tp = hitunganTerakhir;
@@ -334,67 +353,46 @@ function exportWordAsFolio() {
 
     let tglInp = document.getElementById('tglSurat').value;
     if(tglInp) { 
-        let parts = tglInp.split('-'); 
-        let strBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][parseInt(parts[1])-1]; 
-        let finalTgl = `${parts[2]} ${strBulan} ${parts[0]}`; 
-        document.querySelectorAll('.prTanggal').forEach(el => el.innerText = finalTgl); 
-    } else {
-        document.querySelectorAll('.prTanggal').forEach(el => el.innerText = ""); 
-    }
+        let parts = tglInp.split('-'); let strBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][parseInt(parts[1])-1]; 
+        let finalTgl = `${parts[2]} ${strBulan} ${parts[0]}`; document.querySelectorAll('.prTanggal').forEach(el => el.innerText = finalTgl); 
+    } else { document.querySelectorAll('.prTanggal').forEach(el => el.innerText = ""); }
 
     let areaCetak = document.getElementById('areaCetak').innerHTML;
     areaCetak = areaCetak.replace(/<div class="page-break"><\/div>/g, '<br clear="all" style="page-break-before:always" />');
 
     let htmlContent = `
     <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head>
-        <meta charset='utf-8'>
-        <title>Export Word F4</title>
-        <style>
-            @page WordSection1 {
-                size: 8.5in 13.0in;
-                margin: 1.0in 1.0in 1.0in 1.0in; 
-                mso-header-margin: .5in;
-                mso-footer-margin: .5in;
-                mso-paper-source: 0;
-            }
-            div.WordSection1 { page: WordSection1; }
-            body { font-family: 'Times New Roman', Times, serif; color: black; }
-            table { width: 100%; border-collapse: collapse; }
-            .kop-table { border-bottom: 3px solid black; margin-bottom: 20px; padding-bottom: 10px; }
-            .tabel-print th, .tabel-print td { border: 1pt solid black; padding: 6px 8px; font-size: 11pt; }
-            .tabel-print th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
-            .box-terbilang { border: 3pt double black; padding: 8px 12px; font-weight: bold; font-style: italic; background-color: #f9f9f9; }
-            .no-border { border: none !important; }
-            td { vertical-align: top; }
-        </style>
-    </head>
-    <body>
-        <div class="WordSection1">
-            ${areaCetak}
-        </div>
-    </body>
+    <head><meta charset='utf-8'><title>Export Word F4</title><style>@page WordSection1 { size: 8.5in 13.0in; margin: 1.0in 1.0in 1.0in 1.0in; mso-header-margin: .5in; mso-footer-margin: .5in; mso-paper-source: 0; } div.WordSection1 { page: WordSection1; } body { font-family: 'Times New Roman', Times, serif; color: black; } table { width: 100%; border-collapse: collapse; } .kop-table { border-bottom: 3px solid black; margin-bottom: 20px; padding-bottom: 10px; } .tabel-print th, .tabel-print td { border: 1pt solid black; padding: 6px 8px; font-size: 11pt; } .tabel-print th { background-color: #f2f2f2; text-align: center; font-weight: bold; } .box-terbilang { border: 3pt double black; padding: 8px 12px; font-weight: bold; font-style: italic; background-color: #f9f9f9; } .no-border { border: none !important; } td { vertical-align: top; }</style></head>
+    <body><div class="WordSection1">${areaCetak}</div></body>
     </html>`;
 
     let blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
     let url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(htmlContent);
-    
     let namaCustomer = document.getElementById('customer').value.trim() || 'Customer';
     let namaFile = 'Nota_Kwitansi_GLA_' + namaCustomer + '.doc';
     
-    let downloadLink = document.createElement("a");
-    document.body.appendChild(downloadLink);
-    if(navigator.msSaveOrOpenBlob) {
-        navigator.msSaveOrOpenBlob(blob, namaFile);
-    } else {
-        downloadLink.href = url;
-        downloadLink.download = namaFile;
-        downloadLink.click();
-    }
+    let downloadLink = document.createElement("a"); document.body.appendChild(downloadLink);
+    if(navigator.msSaveOrOpenBlob) { navigator.msSaveOrOpenBlob(blob, namaFile); } else { downloadLink.href = url; downloadLink.download = namaFile; downloadLink.click(); }
     document.body.removeChild(downloadLink);
 }
 
-function kosongkanForm() { document.querySelectorAll('input[type="text"]:not(#customer), textarea').forEach(el => el.value = ''); document.getElementById('customer').value = ''; document.getElementById('editIdArsip').value = ''; stateItems = []; document.querySelector('input[value="exclude"]').checked = true; setUIStatus("Buat Baru"); document.getElementById('warningNota').style.display = 'none'; renderTabelUI(); }
+function kosongkanForm() { 
+    document.querySelectorAll('input[type="text"]:not(#customer), textarea').forEach(el => el.value = ''); 
+    document.getElementById('customer').value = ''; 
+    
+    let elAlamat = document.getElementById('alamatCustomer');
+    if(elAlamat) elAlamat.value = ''; 
+    
+    let elUp = document.getElementById('upCustomer');
+    if(elUp) elUp.value = 'Bagian Keuangan'; 
+    
+    document.getElementById('editIdArsip').value = ''; 
+    stateItems = []; 
+    document.querySelector('input[value="exclude"]').checked = true; 
+    setUIStatus("Buat Baru"); 
+    document.getElementById('warningNota').style.display = 'none'; 
+    renderTabelUI(); 
+}
 
 function switchTab(target) {
     document.getElementById('pageGenerator').style.display = target === 'generator' ? 'flex' : 'none'; document.getElementById('pageArsip').style.display = target === 'arsip' ? 'flex' : 'none'; document.getElementById('pagePengaturan').style.display = target === 'pengaturan' ? 'flex' : 'none';
@@ -407,6 +405,5 @@ function filterCustomer() { let input = document.getElementById('customer').valu
 function pilihCustomer(val) { document.getElementById('customer').value = val; document.getElementById('listCustomer').style.display = 'none'; }
 function toggleTema() { document.body.classList.toggle('dark-mode'); let icon = document.getElementById('iconTema'); if (document.body.classList.contains('dark-mode')) { icon.classList.replace('fa-moon', 'fa-sun'); icon.style.color = '#fbbf24'; localStorage.setItem('temaGLA', 'gelap'); } else { icon.classList.replace('fa-sun', 'fa-moon'); icon.style.color = 'var(--text-muted)'; localStorage.setItem('temaGLA', 'terang'); } }
 
-// SAAT PERTAMA KALI HALAMAN DIBUKA, LANGSUNG MASUK!
 window.onload = initApp;
 document.addEventListener('click', function(e) { if(e.target.id !== 'customer') document.getElementById('listCustomer').style.display = 'none'; });
