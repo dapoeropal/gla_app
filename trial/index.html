@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Kwitansi & Nota - CV. GLA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+</head>
+<body>
+
+    <div id="pageLogin">
+        <div class="login-box">
+            <h1 style="color: var(--primary); margin-top: 0;"><i class="fa-solid fa-file-invoice-dollar"></i> GLA System</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Silakan login untuk mengakses sistem</p>
+            
+            <div style="text-align: left;">
+                <label>Username</label>
+                <input type="text" id="loginUser" placeholder="Masukkan username" style="margin-bottom: 15px;">
+                <label>Password</label>
+                <input type="password" id="loginPass" placeholder="Masukkan password" style="margin-bottom: 25px;" onkeypress="if(event.key === 'Enter') eksekusiLogin()">
+                <button class="btn btn-primary" onclick="eksekusiLogin()"><i class="fa-solid fa-right-to-bracket"></i> Masuk Aplikasi</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="appContainer" style="display: none;">
+        
+        <div class="top-nav">
+            <h1><i class="fa-solid fa-file-invoice-dollar"></i> GLA</h1>
+            
+            <div class="tab-menu no-print">
+                <button class="tab-btn active" id="tabGenerator" onclick="switchTab('generator')"><i class="fa-solid fa-pen-to-square"></i> Form Nota</button>
+                <button class="tab-btn" id="tabArsip" onclick="switchTab('arsip')"><i class="fa-solid fa-database"></i> Arsip</button>
+                <button class="tab-btn" id="tabPengaturan" onclick="switchTab('pengaturan')" style="display: none;"><i class="fa-solid fa-users-gear"></i> Pengaturan</button>
+            </div>
+
+            <div style="display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <div style="text-align: right;">
+                    <div id="displayRole" style="font-weight: 800; font-size: 0.9rem;">Admin Desa</div>
+                    <div id="displayUser" style="font-size: 0.75rem; color: var(--text-muted);">CV GLA</div>
+                </div>
+                <button class="btn btn-danger no-print" onclick="kosongkanForm()" title="Tombol Refresh Form" style="padding: 8px 12px; font-size: 0.8rem;"><i class="fa-solid fa-arrows-rotate"></i> Refresh Form</button>
+                <button onclick="toggleTema()" style="background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-moon" id="iconTema"></i></button>
+                <button onclick="eksekusiLogout()" style="background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--danger);" title="Keluar"><i class="fa-solid fa-power-off"></i></button>
+            </div>
+        </div>
+
+        <div class="main-wrapper" id="pageGenerator">
+            <div class="panel left-panel">
+                <div class="section-header">
+                    <i class="fa-solid fa-circle-info"></i> 1. Informasi Surat
+                    <span id="badgeStatusUI" class="badge-status status-baru">Status: Buat Baru</span>
+                </div>
+                <input type="hidden" id="editIdArsip" value="">
+                
+                <div class="row"><div class="col"><label>Tanggal Transaksi</label><input type="date" id="tglSurat"></div></div>
+                <div class="row">
+                    <div class="col"><label>Nomor Kwitansi</label><input type="text" id="noKwitansi" placeholder="007/NPJ/V/2026"></div>
+                    <div class="col">
+                        <label>Nomor Nota</label>
+                        <input type="text" id="noNota" placeholder="007/NPJ/V/2026" onkeyup="cekHistoriNota()">
+                        <div id="warningNota" class="warning-text">⚠️ Nomor sudah terpakai!</div>
+                    </div>
+                </div>
+
+                <div class="section-header"><i class="fa-solid fa-building-user"></i> 2. Data Customer</div>
+                
+                <div class="row" style="margin-bottom: 15px; position: relative;">
+                    <div class="col">
+                        <label>Nama Customer</label>
+                        <input type="text" id="customer" placeholder="CONTOH: PT. ABC MAKMUR" onkeyup="filterCustomer()" autocomplete="off" onfocus="document.getElementById('listCustomer').style.display='block'" style="padding-right: 35px; text-transform: uppercase;">
+                        <i class="fa-solid fa-caret-down" style="position: absolute; right: 15px; top: 38px; color: #64748b; pointer-events: none;"></i>
+                        <ul id="listCustomer" class="autocomplete-list"></ul>
+                    </div>
+                </div>
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col">
+                        <label>Kota / Alamat</label>
+                        <textarea id="alamatCustomer" placeholder="Contoh: Beji Wetan, RT 01 RW 04, Kalibeji, Tuntang, KAB. SEMARANG" style="min-height: 80px;"></textarea>
+                    </div>
+                </div>
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col">
+                        <label>UP (Tujuan)</label>
+                        <input type="text" id="upCustomer" value="Bagian Keuangan" placeholder="Contoh: Bpk Budi">
+                    </div>
+                </div>
+                <button id="btnSimpan" class="btn btn-success" onclick="simpanAtauUpdateDB()" style="margin-top: 15px;"><i class="fa-solid fa-cloud-arrow-up"></i> Simpan Database Sheet</button>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn btn-primary" onclick="siapkanCetakLaluPrint()"><i class="fa-solid fa-file-pdf"></i> Cetak PDF</button>
+                    <button class="btn" onclick="exportWordAsFolio()" style="background: #0284c7; color: white; width: 100%;"><i class="fa-solid fa-file-word"></i> Word (F4)</button>
+                </div>
+            </div>
+
+            <div class="panel right-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div class="section-header" style="margin: 0;"><i class="fa-solid fa-box-open"></i> 3. Keranjang Produk</div>
+                    <button class="btn btn-primary" style="width: auto; padding: 8px 15px; font-size: 0.85rem;" onclick="bukaModalProduk()"><i class="fa-solid fa-plus"></i> Tambah Item</button>
+                </div>
+                
+                <div class="table-container">
+                    <table class="tabel-ui">
+                        <thead><tr><th width="40%">Deskripsi Produk</th><th width="10%">Qty</th><th width="15%">Satuan</th><th width="15%" style="text-align:right;">Harga</th><th width="15%" style="text-align:right;">Total</th><th width="5%" style="text-align: center;"><i class="fa-solid fa-gear"></i></th></tr></thead>
+                        <tbody id="tabelBodyPesanan"><tr><td colspan="6" style="text-align:center; padding: 30px; color: var(--text-muted); font-style: italic;">Keranjang kosong.</td></tr></tbody>
+                    </table>
+                </div>
+
+                <div class="total-box">
+                    <div class="row" style="margin-bottom: 15px; border-bottom: 1px solid var(--border-light); padding-bottom: 10px;">
+                        <div style="width: 100%; display: flex; justify-content: flex-end; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <label style="margin: 0; font-weight: 800; font-size: 0.8rem;">JENIS HARGA :</label>
+                            <label style="display:flex; align-items:center; gap:5px; cursor:pointer; margin:0;"><input type="radio" name="tipeHarga" value="exclude" checked onchange="kalkulasiTotal()"> Exclude PPN</label>
+                            <label style="display:flex; align-items:center; gap:5px; cursor:pointer; margin:0;"><input type="radio" name="tipeHarga" value="include" onchange="kalkulasiTotal()"> Include PPN</label>
+                        </div>
+                    </div>
+                    <div class="row"><div style="width: 180px;">Subtotal (DPP) :</div><input type="text" id="viewDpp" readonly></div>
+                    <div class="row"><div style="width: 180px; display: flex; justify-content: flex-end; gap: 8px;"><label style="cursor: pointer; display: flex; align-items: center; gap: 5px;"><input type="checkbox" id="pakaiPPN" onchange="kalkulasiTotal()" style="width:16px; height:16px;"> + PPN 11%</label></div><input type="text" id="viewPpn" readonly></div>
+                    <div class="row"><div style="width: 180px; display: flex; justify-content: flex-end; gap: 8px;"><label style="cursor: pointer; display: flex; align-items: center; gap: 5px;"><input type="checkbox" id="pakaiPPH" onchange="kalkulasiTotal()" style="width:16px; height:16px;"> - PPh</label></div><input type="number" id="inputPph" value="0" oninput="kalkulasiTotal()"></div>
+                    <div class="row" style="border-top: 1px solid var(--border-input); padding-top: 15px; margin-top: 15px;"><div style="width: 180px; font-weight: 900; font-size: 1rem;">GRAND TOTAL :</div><input type="text" id="viewGrandTotal" readonly></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-wrapper" id="pageArsip" style="display: none;">
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <h2 style="margin: 0; color: var(--text-heading);"><i class="fa-solid fa-server"></i> Database Arsip Transaksi</h2>
+                    <button class="btn" style="background: var(--text-muted); color: white; width: auto;" onclick="muatDataArsip()"><i class="fa-solid fa-arrows-rotate"></i> Refresh Data</button>
+                </div>
+                <input type="text" id="searchArsip" onkeyup="filterArsip()" placeholder="Pencarian Nama Barang, Customer, atau No Nota..." style="margin-bottom: 15px; font-weight: bold;">
+                <div class="table-container">
+                    <table class="tabel-ui">
+                        <thead><tr><th width="10%">Tanggal</th><th width="15%">Dokumen</th><th width="20%">Customer & Lokasi</th><th width="25%">Daftar Barang & Total (Rp)</th><th width="15%" style="text-align:right;">Grand Total</th><th width="15%" style="text-align: center;">Aksi</th></tr></thead>
+                        <tbody id="bodyArsip"><tr><td colspan="6" style="text-align:center; padding:50px;">Mengambil data... <i class="fa-solid fa-spinner fa-spin"></i></td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-wrapper" id="pagePengaturan" style="display: none;">
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <h2 style="margin: 0; color: var(--text-heading);"><i class="fa-solid fa-users-gear"></i> Manajemen Akses User</h2>
+                    <button class="btn btn-primary" style="width: auto;" onclick="bukaModalUser()"><i class="fa-solid fa-user-plus"></i> Tambah User</button>
+                </div>
+                <div class="table-container">
+                    <table class="tabel-ui">
+                        <thead><tr><th>Username</th><th>Password</th><th>Hak Akses</th><th style="text-align: center;">Aksi</th></tr></thead>
+                        <tbody id="bodyUsers"><tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="modalProduk" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top: 0; color: var(--primary);"><i class="fa-solid fa-cart-plus"></i> Form Item</h3>
+            <label>Deskripsi Produk</label><textarea id="modDesc" placeholder="Tempat Sampah Anyaman..." style="margin-bottom: 12px; min-height: 80px;"></textarea>
+            <div class="row" style="margin-bottom: 12px;"><div class="col"><label>Qty</label><input type="number" id="modQty" value="1"></div><div class="col"><label>Satuan</label><input type="text" id="modSatuan" value="Buah"></div></div>
+            <label>Harga Satuan (Rp)</label><input type="number" id="modHarga" value="60000" style="margin-bottom: 25px;">
+            <div class="row" style="margin-bottom: 0;">
+                <button class="btn" style="flex: 1; background: var(--border-input); color: var(--text-heading);" onclick="document.getElementById('modalProduk').classList.remove('active')">Batal</button>
+                <button class="btn btn-primary" style="flex: 2; margin-top: 0;" onclick="simpanItemModal()"><i class="fa-solid fa-check"></i> Simpan ke Keranjang</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalUser" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top: 0; color: var(--primary);"><i class="fa-solid fa-user-shield"></i> Form Akses User</h3>
+            <input type="hidden" id="modUserId">
+            <label>Username</label><input type="text" id="modUsername" style="margin-bottom: 12px;">
+            <label>Password</label><input type="text" id="modPassword" style="margin-bottom: 12px;">
+            <label>Hak Akses</label>
+            <select id="modRole" style="margin-bottom: 25px;">
+                <option value="Admin">Admin (Bisa Semua Fitur)</option>
+                <option value="User">User (Hanya Form & Arsip)</option>
+            </select>
+            <div class="row" style="margin-bottom: 0;">
+                <button class="btn" style="flex: 1; background: var(--border-input); color: var(--text-heading);" onclick="document.getElementById('modalUser').classList.remove('active')">Batal</button>
+                <button class="btn btn-primary" style="flex: 2; margin-top: 0;" onclick="simpanUserModal()"><i class="fa-solid fa-check"></i> Simpan User</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="areaCetak">
+        <div class="kertas">
+            <table class="kop-table"><tr><td style="width: 15%; font-size: 28pt; font-family: Arial; font-weight: 900; vertical-align: top;">GLA</td><td style="text-align: center;"><div class="kop-title">CV. GATRATRI LUMINTU ABADI</div><div style="font-size: 10pt;">Ds. Megawon RT.006 RW.002, Megawon, Jati Kudus - Jawa Tengah</div><div style="font-size: 10pt;">Email: gatratrilumintuabadi@gmail.com | Telp: 085199643611</div></td></tr></table>
+            <div style="text-align: center; font-size: 16pt; font-weight: bold; text-decoration: underline; text-transform: uppercase;">Kwitansi</div>
+            <div style="text-align: center; font-size: 11pt; margin-bottom: 30px;">No: <span id="prKwitansi"></span></div>
+            <table style="width: 100%; font-size: 12pt; margin-bottom: 25px;"><tr><td width="25%" style="padding: 5px;">Sudah terima dari</td><td width="3%">:</td><td><b id="prCustomer"></b></td></tr><tr><td style="padding: 5px;">Jumlah Uang</td><td>:</td><td><b style="font-style: italic;" id="prTerbilang"></b></td></tr><tr><td style="padding: 5px; vertical-align: top;">Untuk pembayaran</td><td style="vertical-align: top;">:</td><td id="prListKwitansi"></td></tr><tr><td style="padding: 5px;">Kota / Alamat</td><td>:</td><td id="prLokasi"></td></tr></table>
+            <table style="width: 100%; margin-bottom: 40px;"><tr><td width="15%" style="font-weight: bold; font-size: 14pt; vertical-align: middle;">RP.</td><td class="box-terbilang" id="prTotalKwitansi"></td></tr></table>
+            <table style="width: 100%; text-align: center; font-size: 12pt;"><tr><td width="50%"><div>Mengetahui,</div><div><b>Kepala Desa ..........................</b></div><br><br><br><br><div>( ___________________________ )</div></td><td width="50%"><div>Kudus, <span class="prTanggal"></span></div><div><b>CV Gatratri Lumintu Abadi</b></div><br><br><br><br><div><b><u>HENDRI RAHARDJONO</u></b></div><div style="font-size: 10pt;">Koordinator Penjualan</div></td></tr></table>
+        </div>
+        <div class="page-break"></div>
+        <div class="kertas">
+            <table class="kop-table"><tr><td style="width: 15%; font-size: 28pt; font-family: Arial; font-weight: 900; vertical-align: top;">GLA</td><td style="text-align: center;"><div class="kop-title">CV. GATRATRI LUMINTU ABADI</div><div style="font-size: 10pt;">Ds. Megawon RT.006 RW.002, Megawon, Jati Kudus - Jawa Tengah</div><div style="font-size: 10pt;">Email: gatratrilumintuabadi@gmail.com | Telp: 085199643611</div></td></tr></table>
+            
+            <table style="width: 100%; margin-bottom: 20px; font-size: 11pt;"><tr><td width="60%" style="vertical-align: top;"><b>Kudus, <span class="prTanggal"></span></b><br>No Nota: <span id="prNota"></span></td><td style="text-align: right; vertical-align: top;">Kepada Yth:<br><b id="prCustomerNota"></b><br><span id="prAlamatNota" style="display: block; margin: 3px 0;">Di Tempat</span><span id="prUpNota"></span></td></tr></table>
+            
+            <div style="text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 15px; text-decoration: underline;">NOTA PENJUALAN</div>
+            <table class="tabel-print"><thead><tr><th width="5%">NO</th><th width="45%">Nama Barang</th><th width="10%">QTY</th><th width="10%">SATUAN</th><th width="15%">Harga Satuan (Rp)</th><th width="15%">Jumlah (Rp)</th></tr></thead><tbody id="prBodyNota"></tbody></table>
+            <table style="width: 100%; margin-top: 30px; font-size: 11pt;"><tr><td width="60%" style="vertical-align: top; font-size: 10pt;"><b>PERHATIAN:</b><br>1. Barang yang sudah dibeli tidak boleh ditukar / dikembalikan.<br>2. Pembayaran dianggap sah jika disertai tanda tangan resmi.</td><td width="40%" style="text-align: center;"><div>Hormat Kami,</div><br><br><br><br><div><b><u>HENDRI RAHARDJONO</u></b></div><div style="font-size: 10pt;">CV Gatratri Lumintu Abadi</div></td></tr></table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
+        }
+    </script>
+</body>
+</html>
