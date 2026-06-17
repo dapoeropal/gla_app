@@ -1,5 +1,5 @@
 // GANTI INI DENGAN URL APPS SCRIPT-MU!
-const URL_GAS = "https://script.google.com/macros/s/AKfycbyMtChucZloFiwSuasLmRkPstuoKWk328TIdRRXvkLXyBsY4OK5cgX-jSMI34gCV0A9/exec";
+const URL_GAS = "https://script.google.com/macros/s/AKfycbwQDbdvUkEoD0w1jhahbpsJFEFadR82H7KAn_5tutcuFy8bwZeOD_tTqLSzJ_aSEDgW/exec";
 
 let stateItems = []; 
 let editIndex = -1; 
