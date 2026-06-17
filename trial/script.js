@@ -243,7 +243,7 @@ function isiFormDariArsip(d) {
     stateItems = JSON.parse(JSON.stringify(d.items)); 
 }
 
-// JURUS PENCARIAN INDEX MEMORI (100% KEBAL BUG BOLO)
+// JURUS PENCARIAN INDEX MEMORI & PINDAH TAB OTOMATIS BOLO
 function copyArsip(mem_id) { 
     let d = databaseArsip.find(x => x.mem_id === mem_id);
     if(!d) return Swal.fire('Gagal', 'Data tidak ditemukan di memori Bolo!', 'error');
@@ -253,7 +253,13 @@ function copyArsip(mem_id) {
     setUIStatus("Copy Baru"); 
     cekHistoriNota(); 
     renderTabelUI(); 
+    
+    // Paksa pindah ke halaman Form (Generator)
     switchTab('generator'); 
+    
+    // Tarik layar otomatis ke paling atas dengan mulus
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     Swal.fire({ toast:true, position:'top-end', icon:'success', title:'Tercopy! Siap diedit jadi Nota Baru', showConfirmButton:false, timer:2500 }); 
 }
 
@@ -266,7 +272,13 @@ function editArsip(mem_id) {
     setUIStatus("Edit Arsip"); 
     document.getElementById('warningNota').style.display = 'none'; 
     renderTabelUI(); 
+    
+    // Paksa pindah ke halaman Form (Generator)
     switchTab('generator'); 
+    
+    // Tarik layar otomatis ke paling atas dengan mulus
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     Swal.fire({ toast:true, position:'top-end', icon:'info', title:'Data Siap Diedit!', showConfirmButton:false, timer:2000 }); 
 }
 
