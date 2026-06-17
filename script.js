@@ -1,11 +1,11 @@
 // GANTI INI DENGAN URL APPS SCRIPT-MU!
-const URL_GAS = "https://script.google.com/macros/s/AKfycbwQDbdvUkEoD0w1jhahbpsJFEFadR82H7KAn_5tutcuFy8bwZeOD_tTqLSzJ_aSEDgW/exec";
+const URL_GAS = "https://script.google.com/macros/s/AKfycbz_XS1GLAHU5h8ZK5hm1kBOekLOkOIVxlaiaa_sT6DSolroDKPfOsT4AsLKHTWMGQpX/exec";
 
 let stateItems = []; 
 let editIndex = -1; 
 let databaseArsip = []; 
 let listCustomerDb = []; 
-let databaseUsers = []; // <-- Ini yang sempat hilang Bolo!
+let databaseUsers = [];
 
 function formatRp(angka) { return new Intl.NumberFormat('id-ID').format(Math.round(angka)); }
 function penyebut(nilai) {
@@ -15,80 +15,57 @@ function penyebut(nilai) {
     return temp;
 }
 
+// JURUS ANTI TANGGAL ANEH GOOGLE SHEETS BOLO
+function perbaikiTanggalISO(tglStr) {
+    if (!tglStr) return "";
+    try {
+        let d = new Date(tglStr);
+        if (isNaN(d.getTime())) return tglStr; // Jika sudah berupa teks biasa, kembalikan aslinya
+        let yyyy = d.getFullYear();
+        let mm = String(d.getMonth() + 1).padStart(2, '0');
+        let dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    } catch(e) { return tglStr; }
+}
+
 // ==========================================
-// 1. SISTEM LOGIN & OTORISASI BOLO
+// 1. SISTEM LOGIN (DINONAKTIFKAN / BYPASS BOLO)
 // ==========================================
 async function eksekusiLogin() {
-    let u = document.getElementById('loginUser').value.trim();
-    let p = document.getElementById('loginPass').value.trim();
-    if(!u || !p) return Swal.fire('Kosong', 'Username dan Password wajib diisi!', 'warning');
-    
-    Swal.fire({ title: 'Otentikasi...', didOpen: () => { Swal.showLoading() } });
-    try {
-        let res = await fetch(URL_GAS, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // <-- Jurus Anti-CORS Bolo
-            body: JSON.stringify({ action: "login", username: u, password: p }) 
-        });
-        
-        let text = await res.text(); 
-        let data;
-        
-        try {
-            data = JSON.parse(text); // Coba terjemahkan balasan dari Google
-        } catch(err) {
-            console.error("Error Server:", text);
-            return Swal.fire('Error Server', 'Google Script belum di-Deploy Versi Baru! Cek langkah 1 Bolo.', 'error');
-        }
-
-        if(data.success) {
-            localStorage.setItem('gla_role', data.role);
-            localStorage.setItem('gla_user', data.username);
-            Swal.fire('Berhasil', 'Selamat datang ' + data.username, 'success');
-            initApp(); 
-        } else {
-            Swal.fire('Gagal', data.message, 'error');
-        }
-    } catch(e) { Swal.fire('Error', 'Gagal koneksi ke server. Pastikan HP ada kuotanya Bolo.', 'error'); }
+    initApp();
 }
 
 function eksekusiLogout() {
-    Swal.fire({ title: 'Keluar Aplikasi?', icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Keluar' }).then((result) => {
-        if (result.isConfirmed) {
-            localStorage.removeItem('gla_role'); localStorage.removeItem('gla_user');
-            window.location.reload();
-        }
-    });
+    Swal.fire('Info', 'Sistem Login saat ini sedang dinonaktifkan sementara Bolo!', 'info');
 }
 
 function initApp() {
-    let role = localStorage.getItem('gla_role');
-    let user = localStorage.getItem('gla_user');
+    document.getElementById('pageLogin').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
     
-    if(role) { 
-        document.getElementById('pageLogin').style.display = 'none';
-        document.getElementById('appContainer').style.display = 'block';
-        document.getElementById('displayRole').innerText = role;
-        document.getElementById('displayUser').innerText = "Halo, " + user;
-        
-        if(role === 'Admin') {
-            document.getElementById('tabPengaturan').style.display = 'inline-block';
-            muatDataUser(); 
-        } else {
-            document.getElementById('tabPengaturan').style.display = 'none';
+    document.getElementById('displayRole').innerText = "Admin (Bypass)";
+    document.getElementById('displayUser').innerText = "Halo, Admin";
+    
+    document.getElementById('tabPengaturan').style.display = 'inline-block';
+    
+    switchTab('generator');
+    muatDataArsip(); 
+    
+    if(localStorage.getItem('temaGLA') === 'gelap') { 
+        document.body.classList.add('dark-mode'); 
+        let iconTema = document.getElementById('iconTema');
+        if(iconTema) {
+            iconTema.classList.replace('fa-moon', 'fa-sun'); 
+            iconTema.style.color = '#fbbf24'; 
         }
-        switchTab('generator');
-        muatDataArsip();
-    } else { 
-        document.getElementById('pageLogin').style.display = 'flex';
-        document.getElementById('appContainer').style.display = 'none';
     }
-    if(localStorage.getItem('temaGLA') === 'gelap') { document.body.classList.add('dark-mode'); document.getElementById('iconTema').classList.replace('fa-moon', 'fa-sun'); document.getElementById('iconTema').style.color = '#fbbf24'; }
-    document.getElementById('tglSurat').valueAsDate = new Date();
+    
+    let tglSurat = document.getElementById('tglSurat');
+    if(tglSurat) tglSurat.valueAsDate = new Date();
 }
 
 // ==========================================
-// 2. MANAJEMEN USER (KHUSUS ADMIN)
+// 2. MANAJEMEN USER 
 // ==========================================
 async function muatDataUser() {
     try {
@@ -165,20 +142,32 @@ function kalkulasiTotal() {
 
 function kumpulkanData() {
     return {
-        tanggal: document.getElementById('tglSurat').value, no_kwitansi: document.getElementById('noKwitansi').value, no_nota: document.getElementById('noNota').value, customer: document.getElementById('customer').value, kegiatan: document.getElementById('kegiatan').value, 
-        pakai_ppn: document.getElementById('pakaiPPN').checked, pakai_pph: document.getElementById('pakaiPPH').checked, nominal_pph: document.getElementById('inputPph').value,
-        jenis_harga: document.querySelector('input[name="tipeHarga"]:checked').value, items: stateItems
+        tanggal: document.getElementById('tglSurat').value, 
+        no_kwitansi: document.getElementById('noKwitansi').value, 
+        no_nota: document.getElementById('noNota').value, 
+        customer: document.getElementById('customer').value, 
+        kegiatan: document.getElementById('kegiatan').value, 
+        pakai_ppn: document.getElementById('pakaiPPN').checked, 
+        pakai_pph: document.getElementById('pakaiPPH').checked, 
+        nominal_pph: document.getElementById('inputPph').value,
+        jenis_harga: document.querySelector('input[name="tipeHarga"]:checked').value, 
+        items: stateItems
     };
 }
 
 async function simpanAtauUpdateDB() {
     const data = kumpulkanData();
-    if(!data.no_kwitansi || !data.customer || stateItems.length === 0) return Swal.fire('Belum Lengkap', 'Customer, No Kwitansi, dan Item harus diisi.', 'warning');
+    // Validasi Diperbarui Bolo: Tanggal dan No Kwitansi boleh kosong
+    if(!data.customer || stateItems.length === 0) return Swal.fire('Belum Lengkap', 'Customer dan Keranjang Item wajib diisi.', 'warning');
+    
     const idArsip = document.getElementById('editIdArsip').value; const action = idArsip ? 'update' : 'backup';
     Swal.fire({ title: 'Menyimpan ke Google Sheets...', didOpen: () => { Swal.showLoading() } });
+    
     try {
         let payload = { action: action, data: data }; if (idArsip) payload.id = idArsip;
-        await fetch(URL_GAS, { method: 'POST', body: JSON.stringify(payload) });
+        
+        await fetch(URL_GAS, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        
         Swal.fire('Sukses!', 'Database berhasil disimpan!', 'success');
         if (!idArsip) { document.getElementById('editIdArsip').value = "TERSIMPAN"; setUIStatus("Edit Arsip"); }
         muatDataArsip(); 
@@ -188,12 +177,28 @@ async function simpanAtauUpdateDB() {
 async function muatDataArsip() {
     document.getElementById('bodyArsip').innerHTML = '<tr><td colspan="6" style="text-align:center; padding:50px;">Menarik data... <i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
     try {
-        const response = await fetch(URL_GAS + "?action=get_arsip"); const res = await response.json();
+        const response = await fetch(URL_GAS + "?action=get_arsip"); 
+        const res = await response.json();
         if(res.success && res.data) {
             let grouped = {};
             res.data.forEach(row => {
                 let id = row.id_transaksi;
-                if(!grouped[id]) { grouped[id] = { id_transaksi: id, tanggal: row.tanggal, no_nota: row.no_nota, no_kwitansi: row.no_kwitansi, customer: row.customer, kegiatan: row.kegiatan, grand_total: 0, pakai_ppn: false, pakai_pph: false, nominal_pph: 0, jenis_harga: 'exclude', items: [] }; }
+                if(!grouped[id]) { 
+                    grouped[id] = { 
+                        id_transaksi: id, 
+                        tanggal: perbaikiTanggalISO(row.tanggal), // Jurus Konversi ISO Tanggal Bolo
+                        no_nota: row.no_nota, 
+                        no_kwitansi: row.no_kwitansi, 
+                        customer: row.customer, 
+                        kegiatan: row.kegiatan, 
+                        grand_total: 0, 
+                        pakai_ppn: false, 
+                        pakai_pph: false, 
+                        nominal_pph: 0, 
+                        jenis_harga: 'exclude', 
+                        items: [] 
+                    }; 
+                }
                 if (parseFloat(row.ppn) > 0) grouped[id].pakai_ppn = true;
                 if (parseFloat(row.pph) > 0) { grouped[id].pakai_pph = true; grouped[id].nominal_pph += parseFloat(row.pph); }
                 grouped[id].grand_total += parseFloat(row.total);
@@ -203,7 +208,7 @@ async function muatDataArsip() {
             renderTabelArsip(databaseArsip);
             listCustomerDb = [...new Set(databaseArsip.map(item => item.customer))];
         }
-    } catch(e) { document.getElementById('bodyArsip').innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Gagal koneksi ke server.</td></tr>'; }
+    } catch(e) { document.getElementById('bodyArsip').innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Data dari server diblokir CORS. Aplikasi tetap bisa dipakai untuk Generator.</td></tr>'; }
 }
 
 function renderTabelArsip(dataArray) {
@@ -233,8 +238,14 @@ function setUIStatus(mode) {
 }
 
 function isiFormDariArsip(d) {
-    document.getElementById('tglSurat').value = d.tanggal; document.getElementById('noKwitansi').value = d.no_kwitansi; document.getElementById('noNota').value = d.no_nota; document.getElementById('customer').value = d.customer; document.getElementById('kegiatan').value = d.kegiatan;
-    document.getElementById('pakaiPPN').checked = d.pakai_ppn; document.getElementById('pakaiPPH').checked = d.pakai_pph; document.getElementById('inputPph').value = d.nominal_pph;
+    document.getElementById('tglSurat').value = d.tanggal; 
+    document.getElementById('noKwitansi').value = d.no_kwitansi; 
+    document.getElementById('noNota').value = d.no_nota; 
+    document.getElementById('customer').value = d.customer; 
+    document.getElementById('kegiatan').value = d.kegiatan;
+    document.getElementById('pakaiPPN').checked = d.pakai_ppn; 
+    document.getElementById('pakaiPPH').checked = d.pakai_pph; 
+    document.getElementById('inputPph').value = d.nominal_pph;
     if(d.jenis_harga === 'include') { document.querySelector('input[value="include"]').checked = true; } else { document.querySelector('input[value="exclude"]').checked = true; }
     stateItems = JSON.parse(JSON.stringify(d.items)); 
 }
@@ -244,53 +255,71 @@ function editArsip(idx) { let d = databaseArsip[idx]; isiFormDariArsip(d); docum
 
 async function hapusArsip(id_transaksi) {
     Swal.fire({ title: 'Yakin Hapus?', text: "Data tidak bisa dikembalikan!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Ya, Hapus' }).then(async (result) => {
-        if (result.isConfirmed) { Swal.fire({ title: 'Menghapus...', didOpen: () => { Swal.showLoading() } }); await fetch(URL_GAS, { method: 'POST', body: JSON.stringify({ action: "delete", id: id_transaksi }) }); Swal.fire('Terhapus!', 'Baris arsip telah dihapus.', 'success'); muatDataArsip(); }
+        if (result.isConfirmed) { 
+            Swal.fire({ title: 'Menghapus...', didOpen: () => { Swal.showLoading() } }); 
+            await fetch(URL_GAS, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "delete", id: id_transaksi }) }); 
+            Swal.fire('Terhapus!', 'Baris arsip telah dihapus.', 'success'); 
+            muatDataArsip(); 
+        }
     });
 }
 
 function siapkanCetakLaluPrint() {
     if(stateItems.length === 0) return Swal.fire('Kosong', 'Keranjang produk tidak boleh kosong.', 'warning');
-    document.getElementById('prKwitansi').innerText = document.getElementById('noKwitansi').value; document.getElementById('prCustomer').innerText = document.getElementById('customer').value; document.getElementById('prLokasi').innerText = document.getElementById('kegiatan').value;
-    let listKwitansi = stateItems.map(it => `${it.desc} (${it.qty} ${it.satuan})`).join(', '); document.getElementById('prListKwitansi').innerText = listKwitansi;
-    let finalTerbilang = hitunganTerakhir.grandTotal; document.getElementById('prTerbilang').innerText = "# " + penyebut(finalTerbilang).trim() + " Rupiah #"; document.getElementById('prTotalKwitansi').innerText = formatRp(finalTerbilang) + ",-";
-    document.getElementById('prNota').innerText = document.getElementById('noNota').value; document.getElementById('prCustomerNota').innerText = document.getElementById('customer').value;
+    
+    // Tembak Data UI ke Layar Cetak
+    document.getElementById('prKwitansi').innerText = document.getElementById('noKwitansi').value || ""; 
+    document.getElementById('prCustomer').innerText = document.getElementById('customer').value; 
+    document.getElementById('prLokasi').innerText = document.getElementById('kegiatan').value;
+    
+    let listKwitansi = stateItems.map(it => `${it.desc} (${it.qty} ${it.satuan})`).join(', '); 
+    document.getElementById('prListKwitansi').innerText = listKwitansi;
+    
+    let finalTerbilang = hitunganTerakhir.grandTotal; 
+    document.getElementById('prTerbilang').innerText = "# " + penyebut(finalTerbilang).trim() + " Rupiah #"; 
+    document.getElementById('prTotalKwitansi').innerText = formatRp(finalTerbilang) + ",-";
+    
+    document.getElementById('prNota').innerText = document.getElementById('noNota').value; 
+    document.getElementById('prCustomerNota').innerText = document.getElementById('customer').value;
+    
     let tbodyNota = document.getElementById('prBodyNota'); let htmlNota = '';
     stateItems.forEach((it, i) => { htmlNota += `<tr><td style="text-align: center;">${i+1}</td><td><b>${it.desc.replace(/\n/g, '<br>')}</b><br><span style="font-size:8.5pt; color:#555;">Ref: ${document.getElementById('kegiatan').value}</span></td><td style="text-align: center;">${it.qty}</td><td style="text-align: center;">${it.satuan}</td><td style="text-align: right;">${formatRp(it.harga)}</td><td style="text-align: right; font-weight: bold;">${formatRp(it.total)}</td></tr>`; });
     htmlNota += `<tr><td style="border-top:none; border-bottom:none; height:100px;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td></tr>`;
-    let tp = hitunganTerakhir; htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="font-weight:bold; text-align:right;">TOTAL HARGA</td><td style="font-weight:bold; text-align:right;">${formatRp(tp.grandTotal)}</td></tr>`; htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="text-align:right;">DPP</td><td style="text-align:right;">${formatRp(tp.dpp)}</td></tr>`;
+    let tp = hitunganTerakhir; 
+    htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="font-weight:bold; text-align:right;">TOTAL HARGA</td><td style="font-weight:bold; text-align:right;">${formatRp(tp.grandTotal)}</td></tr>`; 
+    htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="text-align:right;">DPP</td><td style="text-align:right;">${formatRp(tp.dpp)}</td></tr>`;
     if(document.getElementById('pakaiPPN').checked) { htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="text-align:right;">PPN 11%</td><td style="text-align:right;">${formatRp(tp.ppn)}</td></tr>`; }
     if(document.getElementById('pakaiPPH').checked) { htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="text-align:right;">PPH</td><td style="text-align:right; color:#b91c1c;">(${formatRp(tp.pph)})</td></tr>`; }
     tbodyNota.innerHTML = htmlNota;
+    
+    // Tembak Tanggal, kosongkan jika user tidak mengisi
     let tglInp = document.getElementById('tglSurat').value;
-    if(tglInp) { let parts = tglInp.split('-'); let strBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][parseInt(parts[1])-1]; let finalTgl = `${parts[2]} ${strBulan} ${parts[0]}`; document.querySelectorAll('.prTanggal').forEach(el => el.innerText = finalTgl); }
+    if(tglInp) { 
+        let parts = tglInp.split('-'); 
+        let strBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][parseInt(parts[1])-1]; 
+        let finalTgl = `${parts[2]} ${strBulan} ${parts[0]}`; 
+        document.querySelectorAll('.prTanggal').forEach(el => el.innerText = finalTgl); 
+    } else {
+        document.querySelectorAll('.prTanggal').forEach(el => el.innerText = ""); 
+    }
+    
     window.print();
 }
 
-function kosongkanForm() { document.querySelectorAll('input[type="text"]:not(#customer), textarea').forEach(el => el.value = ''); document.getElementById('customer').value = ''; document.getElementById('editIdArsip').value = ''; stateItems = []; document.querySelector('input[value="exclude"]').checked = true; setUIStatus("Buat Baru"); document.getElementById('warningNota').style.display = 'none'; renderTabelUI(); }
-
-function switchTab(target) {
-    document.getElementById('pageGenerator').style.display = target === 'generator' ? 'flex' : 'none'; document.getElementById('pageArsip').style.display = target === 'arsip' ? 'flex' : 'none'; document.getElementById('pagePengaturan').style.display = target === 'pengaturan' ? 'flex' : 'none';
-    document.getElementById('tabGenerator').classList.toggle('active', target === 'generator'); document.getElementById('tabArsip').classList.toggle('active', target === 'arsip'); document.getElementById('tabPengaturan').classList.toggle('active', target === 'pengaturan');
-    if(target === 'arsip' && databaseArsip.length === 0) muatDataArsip();
-    if(target === 'pengaturan' && databaseUsers.length === 0) muatDataUser();
-}
-
-function filterCustomer() { let input = document.getElementById('customer').value.toLowerCase(); let ul = document.getElementById('listCustomer'); ul.innerHTML = ''; if(!input) return; let filtered = listCustomerDb.filter(c => c.toLowerCase().includes(input)); filtered.forEach(cust => { ul.innerHTML += `<li onclick="pilihCustomer('${cust}')">${cust}</li>`; }); }
-function pilihCustomer(val) { document.getElementById('customer').value = val; document.getElementById('listCustomer').style.display = 'none'; }
-function toggleTema() { document.body.classList.toggle('dark-mode'); let icon = document.getElementById('iconTema'); if (document.body.classList.contains('dark-mode')) { icon.classList.replace('fa-moon', 'fa-sun'); icon.style.color = '#fbbf24'; localStorage.setItem('temaGLA', 'gelap'); } else { icon.classList.replace('fa-sun', 'fa-moon'); icon.style.color = 'var(--text-muted)'; localStorage.setItem('temaGLA', 'terang'); } }
-
-// ==========================================
-// JURUS EXPORT KE WORD (KERTAS F4 / FOLIO)
-// ==========================================
 function exportWordAsFolio() {
     if(stateItems.length === 0) return Swal.fire('Kosong', 'Keranjang produk tidak boleh kosong.', 'warning');
     
-    document.getElementById('prKwitansi').innerText = document.getElementById('noKwitansi').value; document.getElementById('prCustomer').innerText = document.getElementById('customer').value; document.getElementById('prLokasi').innerText = document.getElementById('kegiatan').value;
-    let listKwitansi = stateItems.map(it => `${it.desc} (${it.qty} ${it.satuan})`).join(', '); document.getElementById('prListKwitansi').innerText = listKwitansi;
+    document.getElementById('prKwitansi').innerText = document.getElementById('noKwitansi').value || ""; 
+    document.getElementById('prCustomer').innerText = document.getElementById('customer').value; 
+    document.getElementById('prLokasi').innerText = document.getElementById('kegiatan').value;
+    let listKwitansi = stateItems.map(it => `${it.desc} (${it.qty} ${it.satuan})`).join(', '); 
+    document.getElementById('prListKwitansi').innerText = listKwitansi;
     
     let finalTerbilang = hitunganTerakhir.grandTotal; 
-    document.getElementById('prTerbilang').innerText = "# " + penyebut(finalTerbilang).trim() + " Rupiah #"; document.getElementById('prTotalKwitansi').innerText = formatRp(finalTerbilang) + ",-";
-    document.getElementById('prNota').innerText = document.getElementById('noNota').value; document.getElementById('prCustomerNota').innerText = document.getElementById('customer').value;
+    document.getElementById('prTerbilang').innerText = "# " + penyebut(finalTerbilang).trim() + " Rupiah #"; 
+    document.getElementById('prTotalKwitansi').innerText = formatRp(finalTerbilang) + ",-";
+    document.getElementById('prNota').innerText = document.getElementById('noNota').value; 
+    document.getElementById('prCustomerNota').innerText = document.getElementById('customer').value;
 
     let tbodyNota = document.getElementById('prBodyNota'); let htmlNota = '';
     stateItems.forEach((it, i) => { htmlNota += `<tr><td style="text-align: center;">${i+1}</td><td><b>${it.desc.replace(/\n/g, '<br>')}</b><br><span style="font-size:8.5pt; color:#555;">Ref: ${document.getElementById('kegiatan').value}</span></td><td style="text-align: center;">${it.qty}</td><td style="text-align: center;">${it.satuan}</td><td style="text-align: right;">${formatRp(it.harga)}</td><td style="text-align: right; font-weight: bold;">${formatRp(it.total)}</td></tr>`; });
@@ -304,7 +333,14 @@ function exportWordAsFolio() {
     tbodyNota.innerHTML = htmlNota;
 
     let tglInp = document.getElementById('tglSurat').value;
-    if(tglInp) { let parts = tglInp.split('-'); let strBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][parseInt(parts[1])-1]; let finalTgl = `${parts[2]} ${strBulan} ${parts[0]}`; document.querySelectorAll('.prTanggal').forEach(el => el.innerText = finalTgl); }
+    if(tglInp) { 
+        let parts = tglInp.split('-'); 
+        let strBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][parseInt(parts[1])-1]; 
+        let finalTgl = `${parts[2]} ${strBulan} ${parts[0]}`; 
+        document.querySelectorAll('.prTanggal').forEach(el => el.innerText = finalTgl); 
+    } else {
+        document.querySelectorAll('.prTanggal').forEach(el => el.innerText = ""); 
+    }
 
     let areaCetak = document.getElementById('areaCetak').innerHTML;
     areaCetak = areaCetak.replace(/<div class="page-break"><\/div>/g, '<br clear="all" style="page-break-before:always" />');
@@ -358,6 +394,19 @@ function exportWordAsFolio() {
     document.body.removeChild(downloadLink);
 }
 
-// Saat Pertama Buka Web: Cek apakah sudah login / belum (JANGAN SAMPAI TERTIMPA!)
+function kosongkanForm() { document.querySelectorAll('input[type="text"]:not(#customer), textarea').forEach(el => el.value = ''); document.getElementById('customer').value = ''; document.getElementById('editIdArsip').value = ''; stateItems = []; document.querySelector('input[value="exclude"]').checked = true; setUIStatus("Buat Baru"); document.getElementById('warningNota').style.display = 'none'; renderTabelUI(); }
+
+function switchTab(target) {
+    document.getElementById('pageGenerator').style.display = target === 'generator' ? 'flex' : 'none'; document.getElementById('pageArsip').style.display = target === 'arsip' ? 'flex' : 'none'; document.getElementById('pagePengaturan').style.display = target === 'pengaturan' ? 'flex' : 'none';
+    document.getElementById('tabGenerator').classList.toggle('active', target === 'generator'); document.getElementById('tabArsip').classList.toggle('active', target === 'arsip'); document.getElementById('tabPengaturan').classList.toggle('active', target === 'pengaturan');
+    if(target === 'arsip' && databaseArsip.length === 0) muatDataArsip();
+    if(target === 'pengaturan' && databaseUsers.length === 0) muatDataUser();
+}
+
+function filterCustomer() { let input = document.getElementById('customer').value.toLowerCase(); let ul = document.getElementById('listCustomer'); ul.innerHTML = ''; if(!input) return; let filtered = listCustomerDb.filter(c => c.toLowerCase().includes(input)); filtered.forEach(cust => { ul.innerHTML += `<li onclick="pilihCustomer('${cust}')">${cust}</li>`; }); }
+function pilihCustomer(val) { document.getElementById('customer').value = val; document.getElementById('listCustomer').style.display = 'none'; }
+function toggleTema() { document.body.classList.toggle('dark-mode'); let icon = document.getElementById('iconTema'); if (document.body.classList.contains('dark-mode')) { icon.classList.replace('fa-moon', 'fa-sun'); icon.style.color = '#fbbf24'; localStorage.setItem('temaGLA', 'gelap'); } else { icon.classList.replace('fa-sun', 'fa-moon'); icon.style.color = 'var(--text-muted)'; localStorage.setItem('temaGLA', 'terang'); } }
+
+// SAAT PERTAMA KALI HALAMAN DIBUKA, LANGSUNG MASUK!
 window.onload = initApp;
 document.addEventListener('click', function(e) { if(e.target.id !== 'customer') document.getElementById('listCustomer').style.display = 'none'; });
