@@ -1,5 +1,5 @@
 // UBAH NAMA CACHE MENJADI V2 AGAR SISTEM TAHU INI VERSI BARU
-const CACHE_NAME = "gla-sys-v4"; 
+const CACHE_NAME = "gla-sys-v5"; 
 
 self.addEventListener("install", (e) => {
     e.waitUntil(
