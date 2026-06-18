@@ -91,7 +91,33 @@
                         <input type="text" id="upCustomer" value="Bagian Keuangan" placeholder="Contoh: Bpk Budi">
                     </div>
                 </div>
+<<<<<<< HEAD
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col">
+                        <label>Catatan Tambahan</label>
+                        <textarea id="catatanTambahan" placeholder="Konfirmasi kami tunggu segera agar PO bisa diproses." style="min-height: 80px;"></textarea>
+                    </div>
+                </div>
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col">
+                        <label>Admin / Staff Pembuat</label>
+                        <select id="adminPembuat" style="color: var(--success); font-weight: bold;">
+                            <option value="BAYU FAJAR HABIBI">BAYU FAJAR HABIBI</option>
+                            <option value="HENDRI RAHARDJONO">HENDRI RAHARDJONO</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label>Sales</label>
+                        <select id="namaSales">
+                            <option value="">- Pilih Sales -</option>
+                            <option value="Anissa C.L.">Anissa C.L.</option>
+                            <option value="Sofi">Sofi</option>
+                        </select>
+                    </div>
+                </div>
+=======
                 <!-- AKHIR BLOK CUSTOMER -->
+>>>>>>> 371af3d1ebc6bbfac33b85740927dd3c49313251
 
                 <button id="btnSimpan" class="btn btn-success" onclick="simpanAtauUpdateDB()" style="margin-top: 15px;"><i class="fa-solid fa-cloud-arrow-up"></i> Simpan Database Sheet</button>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -193,7 +219,7 @@
             
             <div style="text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 15px; text-decoration: underline;">NOTA PENJUALAN</div>
             <table class="tabel-print"><thead><tr><th width="5%">NO</th><th width="45%">Nama Barang</th><th width="10%">QTY</th><th width="10%">SATUAN</th><th width="15%">Harga Satuan (Rp)</th><th width="15%">Jumlah (Rp)</th></tr></thead><tbody id="prBodyNota"></tbody></table>
-            <table style="width: 100%; margin-top: 30px; font-size: 11pt;"><tr><td width="60%" style="vertical-align: top; font-size: 10pt;"><b>PERHATIAN:</b><br>1. Barang yang sudah dibeli tidak boleh ditukar / dikembalikan.<br>2. Pembayaran dianggap sah jika disertai tanda tangan resmi.</td><td width="40%" style="text-align: center;"><div>Hormat Kami,</div><br><br><br><br><div><b><u>HENDRI RAHARDJONO</u></b></div><div style="font-size: 10pt;">CV Gatratri Lumintu Abadi</div></td></tr></table>
+            <table style="width: 100%; margin-top: 30px; font-size: 11pt;"><tr><td width="60%" style="vertical-align: top; font-size: 10pt;"><div id="prCatatanNota" style="margin-bottom: 12px; font-weight: bold; font-style: italic; color: black; white-space: pre-line;"></div><b>PERHATIAN:</b><br>1. Barang yang sudah dibeli tidak boleh ditukar / dikembalikan.<br>2. Pembayaran dianggap sah jika disertai tanda tangan resmi.</td><td width="40%" style="text-align: center;"><div>Hormat Kami,</div><br><br><br><br><div><b><u>HENDRI RAHARDJONO</u></b></div><div style="font-size: 10pt;">CV Gatratri Lumintu Abadi</div></td></tr></table>
         </div>
     </div>
 
