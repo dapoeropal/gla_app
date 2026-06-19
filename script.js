@@ -118,7 +118,6 @@ function kalkulasiTotal() {
     document.getElementById('viewDpp').value = formatRp(dpp); document.getElementById('viewPpn').value = formatRp(ppn); document.getElementById('viewGrandTotal').value = formatRp(grandTotal);
 }
 
-// JURUS KOMBINASI FIELD CUSTOMER
 function kumpulkanData() {
     let alamatRaw = document.getElementById('alamatCustomer').value || '';
     let upRaw = document.getElementById('upCustomer').value || '';
@@ -134,6 +133,12 @@ function kumpulkanData() {
         pakai_pph: document.getElementById('pakaiPPH').checked, 
         nominal_pph: document.getElementById('inputPph').value,
         jenis_harga: document.querySelector('input[name="tipeHarga"]:checked').value, 
+        
+        // TAMBAHAN: Agar terbaca saat disave
+        catatan: document.getElementById('catatanTambahan').value,
+        admin_pembuat: document.getElementById('adminPembuat').value,
+        sales: document.getElementById('namaSales').value,
+        
         items: stateItems
     };
 }
@@ -163,8 +168,6 @@ async function muatDataArsip() {
             let grouped = {};
             res.data.forEach(row => {
                 let id = row.id_transaksi;
-
-                // PECAH KEMBALI ALAMAT DAN UP DARI SERVER BOLO
                 let kegiatanAsli = row.kegiatan || '';
                 let arrPisah = kegiatanAsli.split("|||");
                 let d_alamat = arrPisah[0] || '';
@@ -174,7 +177,12 @@ async function muatDataArsip() {
                     grouped[id] = { 
                         id_transaksi: id, tanggal: perbaikiTanggalISO(row.tanggal), no_nota: row.no_nota, no_kwitansi: row.no_kwitansi, 
                         customer: row.customer, alamat_asli: d_alamat, up_asli: d_up, grand_total: 0, 
-                        pakai_ppn: false, pakai_pph: false, nominal_pph: 0, jenis_harga: 'exclude', items: [] 
+                        pakai_ppn: false, pakai_pph: false, nominal_pph: 0, jenis_harga: 'exclude', 
+                        
+                        // TAMBAHAN: Agar data dari Google Sheet masuk ke memori aplikasi
+                        catatan: row.catatan || '', admin_pembuat: row.admin_pembuat || 'BAYU', sales: row.sales || '',
+                        
+                        items: [] 
                     }; 
                 }
                 if (parseFloat(row.ppn) > 0) grouped[id].pakai_ppn = true;
@@ -196,8 +204,30 @@ function renderTabelArsip(dataArray) {
         let listBarangHtml = row.items.map(it => `<div class="arsip-item-list"><div style="display:flex; justify-content:space-between;"><span>&bull; ${it.desc} <span style="color:var(--text-muted); font-size:0.75rem;">(${it.qty} ${it.satuan})</span></span><span style="font-weight:600;">${formatRp(it.total)}</span></div></div>`).join('');
         let teksAlamat = row.alamat_asli ? row.alamat_asli : '-';
         
-        // JURUS ANTI MACET: Ganti '${index}' dengan '${row.id_transaksi}'
-        tbody.innerHTML += `<tr><td style="font-weight:600;">${row.tanggal}</td><td><div style="font-weight:bold;">Kwi: ${row.no_kwitansi || '-'}</div><div style="font-size:0.75rem; color:var(--text-muted);">Nota: ${row.no_nota || '-'}</div></td><td><div style="font-weight:bold; color:var(--primary);">${row.customer.toUpperCase()}</div><div style="font-size:0.75rem; color:var(--text-muted); margin-top: 4px;">${teksAlamat}</div></td><td>${listBarangHtml}</td><td style="text-align:right; font-weight:bold; font-size:1.1rem; color:var(--text-heading);">${formatRp(row.grand_total)}</td><td style="text-align:center; display:flex; gap:5px; flex-wrap:wrap; justify-content:center;"><button class="action-btn" style="background:var(--success);" onclick="copyArsip('${row.id_transaksi}')" title="Copy menjadi Nota Baru"><i class="fa-regular fa-copy"></i></button> <button class="action-btn" style="background:var(--warning);" onclick="editArsip('${row.id_transaksi}')" title="Edit Data"><i class="fa-solid fa-pen"></i></button> <button class="action-btn" style="background:var(--danger);" onclick="hapusArsip('${row.id_transaksi}')" title="Hapus"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+        // TAMBAHAN: Menampilkan Catatan & Info Admin di UI Tabel
+        let infoCatatan = row.catatan ? `<div style="font-size:0.75rem; color:var(--warning); font-weight:600; margin-top: 5px; font-style: italic;">📝 Catatan: "${row.catatan}"</div>` : '';
+        
+        tbody.innerHTML += `<tr>
+            <td style="font-weight:600;">${row.tanggal}</td>
+            <td>
+                <div style="font-weight:bold;">Kwi: ${row.no_kwitansi || '-'}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">Nota: ${row.no_nota || '-'}</div>
+                <div style="font-size:0.72rem; color:var(--primary); font-weight:700; margin-top:5px;"><i class="fa-solid fa-user-gear"></i> ${row.admin_pembuat}</div>
+                <div style="font-size:0.72rem; color:var(--success); font-weight:700;"><i class="fa-solid fa-user-tag"></i> Sales: ${row.sales || '-'}</div>
+            </td>
+            <td>
+                <div style="font-weight:bold; color:var(--primary);">${row.customer.toUpperCase()}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top: 4px;">${teksAlamat}</div>
+                ${infoCatatan}
+            </td>
+            <td>${listBarangHtml}</td>
+            <td style="text-align:right; font-weight:bold; font-size:1.1rem; color:var(--text-heading);">${formatRp(row.grand_total)}</td>
+            <td style="text-align:center; display:flex; gap:5px; flex-wrap:wrap; justify-content:center;">
+                <button class="action-btn" style="background:var(--success);" onclick="copyArsip('${row.id_transaksi}')" title="Copy menjadi Nota Baru"><i class="fa-regular fa-copy"></i></button> 
+                <button class="action-btn" style="background:var(--warning);" onclick="editArsip('${row.id_transaksi}')" title="Edit Data"><i class="fa-solid fa-pen"></i></button> 
+                <button class="action-btn" style="background:var(--danger);" onclick="hapusArsip('${row.id_transaksi}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        </tr>`;
     });
 }
 
@@ -218,14 +248,13 @@ function setUIStatus(mode) {
     }
 }
 
-// JURUS PENGAMAN FORM BOLO
+// JURUS PENGAMAN FORM (Penyebab Tombol Copy Macet Tadi)
 function isiFormDariArsip(d) {
     document.getElementById('tglSurat').value = d.tanggal; 
     document.getElementById('noKwitansi').value = d.no_kwitansi; 
     document.getElementById('noNota').value = d.no_nota; 
     document.getElementById('customer').value = d.customer; 
     
-    // Keamanan jika elemen Alamat/UP tidak ketemu
     let elAlamat = document.getElementById('alamatCustomer');
     if(elAlamat) elAlamat.value = d.alamat_asli || '';
     
@@ -236,10 +265,15 @@ function isiFormDariArsip(d) {
     document.getElementById('pakaiPPH').checked = d.pakai_pph; 
     document.getElementById('inputPph').value = d.nominal_pph;
     if(d.jenis_harga === 'include') { document.querySelector('input[value="include"]').checked = true; } else { document.querySelector('input[value="exclude"]').checked = true; }
+    
+    // TAMBAHAN: Mengamankan data dari nota lama yang belum punya catatan
+    let elCatatan = document.getElementById('catatanTambahan'); if(elCatatan) elCatatan.value = d.catatan || '';
+    let elAdmin = document.getElementById('adminPembuat'); if(elAdmin) elAdmin.value = d.admin_pembuat || 'BAYU';
+    let elSales = document.getElementById('namaSales'); if(elSales) elSales.value = d.sales || '';
+
     stateItems = JSON.parse(JSON.stringify(d.items)); 
 }
 
-// JURUS PENCARIAN ID TRANSAKSI BOLO
 function copyArsip(id_transaksi) { 
     let d = databaseArsip.find(x => x.id_transaksi === id_transaksi);
     if(!d) return;
@@ -294,6 +328,11 @@ function siapkanCetakLaluPrint() {
     document.getElementById('prNota').innerText = document.getElementById('noNota').value; 
     document.getElementById('prCustomerNota').innerText = document.getElementById('customer').value;
     
+    // TAMBAHAN: Memunculkan Catatan di PDF
+    let txtCatatan = document.getElementById('catatanTambahan').value;
+    let elPrCatatan = document.getElementById('prCatatanNota');
+    if (elPrCatatan) elPrCatatan.innerText = txtCatatan ? "Catatan: " + txtCatatan : "";
+
     let txtAlamat = document.getElementById('alamatCustomer').value;
     let txtUp = document.getElementById('upCustomer').value;
     document.getElementById('prAlamatNota').innerHTML = txtAlamat ? txtAlamat.replace(/\n/g, '<br>') : "Di Tempat";
@@ -334,6 +373,11 @@ function exportWordAsFolio() {
     document.getElementById('prTotalKwitansi').innerText = formatRp(finalTerbilang) + ",-";
     document.getElementById('prNota').innerText = document.getElementById('noNota').value; 
     document.getElementById('prCustomerNota').innerText = document.getElementById('customer').value;
+
+    // TAMBAHAN: Memunculkan Catatan di Word
+    let txtCatatan2 = document.getElementById('catatanTambahan').value;
+    let elPrCatatan2 = document.getElementById('prCatatanNota');
+    if(elPrCatatan2) elPrCatatan2.innerText = txtCatatan2 ? "Catatan: " + txtCatatan2 : "";
 
     let txtAlamat = document.getElementById('alamatCustomer').value;
     let txtUp = document.getElementById('upCustomer').value;
@@ -385,6 +429,11 @@ function kosongkanForm() {
     
     let elUp = document.getElementById('upCustomer');
     if(elUp) elUp.value = 'Bagian Keuangan'; 
+    
+    // TAMBAHAN: Membersihkan form Catatan & mengembalikan Admin ke default
+    let elCatatan = document.getElementById('catatanTambahan'); if(elCatatan) elCatatan.value = ''; 
+    let elAdmin = document.getElementById('adminPembuat'); if(elAdmin) elAdmin.value = 'BAYU'; 
+    let elSales = document.getElementById('namaSales'); if(elSales) elSales.value = ''; 
     
     document.getElementById('editIdArsip').value = ''; 
     stateItems = []; 
