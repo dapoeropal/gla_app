@@ -311,6 +311,9 @@ async function hapusArsip(id_transaksi) {
     });
 }
 
+// ==========================================
+// FUNGSI 1: CETAK PDF / PRINT (Sudah dirapikan spasinya)
+// ==========================================
 function siapkanCetakLaluPrint() {
     if(stateItems.length === 0) return Swal.fire('Kosong', 'Keranjang produk tidak boleh kosong.', 'warning');
     
@@ -340,7 +343,10 @@ function siapkanCetakLaluPrint() {
 
     let tbodyNota = document.getElementById('prBodyNota'); let htmlNota = '';
     stateItems.forEach((it, i) => { htmlNota += `<tr><td style="text-align: center;">${i+1}</td><td><b>${it.desc.replace(/\n/g, '<br>')}</b></td><td style="text-align: center;">${it.qty}</td><td style="text-align: center;">${it.satuan}</td><td style="text-align: right;">${formatRp(it.harga)}</td><td style="text-align: right; font-weight: bold;">${formatRp(it.total)}</td></tr>`; });
-    htmlNota += `<tr><td style="border-top:none; border-bottom:none; height:100px;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td></tr>`;
+    
+    // PERBAIKAN: Spasi kosong tabel dikurangi dari 100px jadi 20px
+    htmlNota += `<tr><td style="border-top:none; border-bottom:none; height:20px;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td></tr>`;
+    
     let tp = hitunganTerakhir; 
     htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="font-weight:bold; text-align:right;">TOTAL HARGA</td><td style="font-weight:bold; text-align:right;">${formatRp(tp.grandTotal)}</td></tr>`; 
     htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="text-align:right;">DPP</td><td style="text-align:right;">${formatRp(tp.dpp)}</td></tr>`;
@@ -359,6 +365,9 @@ function siapkanCetakLaluPrint() {
     window.print();
 }
 
+// ==========================================
+// FUNGSI 2: EXPORT WORD (Pisah Halaman & Spasi Rapi)
+// ==========================================
 function exportWordAsFolio() {
     if(stateItems.length === 0) return Swal.fire('Kosong', 'Keranjang produk tidak boleh kosong.', 'warning');
     
@@ -374,7 +383,6 @@ function exportWordAsFolio() {
     document.getElementById('prNota').innerText = document.getElementById('noNota').value; 
     document.getElementById('prCustomerNota').innerText = document.getElementById('customer').value;
 
-    // TAMBAHAN: Memunculkan Catatan di Word
     let txtCatatan2 = document.getElementById('catatanTambahan').value;
     let elPrCatatan2 = document.getElementById('prCatatanNota');
     if(elPrCatatan2) elPrCatatan2.innerText = txtCatatan2 ? "Catatan: " + txtCatatan2 : "";
@@ -386,7 +394,9 @@ function exportWordAsFolio() {
 
     let tbodyNota = document.getElementById('prBodyNota'); let htmlNota = '';
     stateItems.forEach((it, i) => { htmlNota += `<tr><td style="text-align: center;">${i+1}</td><td><b>${it.desc.replace(/\n/g, '<br>')}</b></td><td style="text-align: center;">${it.qty}</td><td style="text-align: center;">${it.satuan}</td><td style="text-align: right;">${formatRp(it.harga)}</td><td style="text-align: right; font-weight: bold;">${formatRp(it.total)}</td></tr>`; });
-    htmlNota += `<tr><td style="border-top:none; border-bottom:none; height:100px;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td></tr>`;
+    
+    // PERBAIKAN: Spasi kosong tabel dikurangi dari 100px jadi 20px
+    htmlNota += `<tr><td style="border-top:none; border-bottom:none; height:20px;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td></tr>`;
     
     let tp = hitunganTerakhir;
     htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="font-weight:bold; text-align:right;">TOTAL HARGA</td><td style="font-weight:bold; text-align:right;">${formatRp(tp.grandTotal)}</td></tr>`;
@@ -402,11 +412,14 @@ function exportWordAsFolio() {
     } else { document.querySelectorAll('.prTanggal').forEach(el => el.innerText = ""); }
 
     let areaCetak = document.getElementById('areaCetak').innerHTML;
-    areaCetak = areaCetak.replace(/<div class="page-break"><\/div>/g, '<br clear="all" style="page-break-before:always" />');
+    
+    // PERBAIKAN: Pemisah halaman (Page Break) khusus yang bisa dibaca paksa oleh MS Word
+    areaCetak = areaCetak.replace(/<div class="page-break"><\/div>/g, '<br clear="all" style="page-break-before:always; mso-break-type:page-break" />');
 
+    // PERBAIKAN: Margin kertas (margin) dikurangi dari 1.0in (2.54cm) menjadi 0.5in (1.27cm) agar isinya muat & tidak berantakan
     let htmlContent = `
     <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head><meta charset='utf-8'><title>Export Word F4</title><style>@page WordSection1 { size: 8.5in 13.0in; margin: 1.0in 1.0in 1.0in 1.0in; mso-header-margin: .5in; mso-footer-margin: .5in; mso-paper-source: 0; } div.WordSection1 { page: WordSection1; } body { font-family: 'Times New Roman', Times, serif; color: black; } table { width: 100%; border-collapse: collapse; } .kop-table { border-bottom: 3px solid black; margin-bottom: 20px; padding-bottom: 10px; } .tabel-print th, .tabel-print td { border: 1pt solid black; padding: 6px 8px; font-size: 11pt; } .tabel-print th { background-color: #f2f2f2; text-align: center; font-weight: bold; } .box-terbilang { border: 3pt double black; padding: 8px 12px; font-weight: bold; font-style: italic; background-color: #f9f9f9; } .no-border { border: none !important; } td { vertical-align: top; }</style></head>
+    <head><meta charset='utf-8'><title>Export Word F4</title><style>@page WordSection1 { size: 8.5in 13.0in; margin: 0.5in 0.5in 0.5in 0.5in; mso-header-margin: .5in; mso-footer-margin: .5in; mso-paper-source: 0; } div.WordSection1 { page: WordSection1; } body { font-family: 'Times New Roman', Times, serif; color: black; } table { width: 100%; border-collapse: collapse; } .kop-table { border-bottom: 3px solid black; margin-bottom: 20px; padding-bottom: 10px; } .tabel-print th, .tabel-print td { border: 1pt solid black; padding: 6px 8px; font-size: 11pt; } .tabel-print th { background-color: #f2f2f2; text-align: center; font-weight: bold; } .box-terbilang { border: 3pt double black; padding: 8px 12px; font-weight: bold; font-style: italic; background-color: #f9f9f9; } .no-border { border: none !important; } td { vertical-align: top; }</style></head>
     <body><div class="WordSection1">${areaCetak}</div></body>
     </html>`;
 
