@@ -393,16 +393,18 @@ function exportWordAsFolio() {
     document.getElementById('prUpNota').innerHTML = txtUp ? `<br>Up. <b>${txtUp}</b>` : "";
 
     let tbodyNota = document.getElementById('prBodyNota'); let htmlNota = '';
-    stateItems.forEach((it, i) => { htmlNota += `<tr><td style="text-align: center;">${i+1}</td><td><b>${it.desc.replace(/\n/g, '<br>')}</b></td><td style="text-align: center;">${it.qty}</td><td style="text-align: center;">${it.satuan}</td><td style="text-align: right;">${formatRp(it.harga)}</td><td style="text-align: right; font-weight: bold;">${formatRp(it.total)}</td></tr>`; });
     
-    // PERBAIKAN: Spasi kosong tabel dikurangi dari 100px jadi 20px
-    htmlNota += `<tr><td style="border-top:none; border-bottom:none; height:20px;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td></tr>`;
+    // BOLO: Padding tabel dikurangi biar lebih rapat
+    stateItems.forEach((it, i) => { htmlNota += `<tr><td style="text-align: center; padding: 3px;">${i+1}</td><td style="padding: 3px;"><b>${it.desc.replace(/\n/g, '<br>')}</b></td><td style="text-align: center; padding: 3px;">${it.qty}</td><td style="text-align: center; padding: 3px;">${it.satuan}</td><td style="text-align: right; padding: 3px;">${formatRp(it.harga)}</td><td style="text-align: right; font-weight: bold; padding: 3px;">${formatRp(it.total)}</td></tr>`; });
+    
+    // BOLO: Tinggi spasi kosong tabel disunat jadi 15px saja
+    htmlNota += `<tr><td style="border-top:none; border-bottom:none; height:15px;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td><td style="border-top:none; border-bottom:none;"></td></tr>`;
     
     let tp = hitunganTerakhir;
-    htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="font-weight:bold; text-align:right;">TOTAL HARGA</td><td style="font-weight:bold; text-align:right;">${formatRp(tp.grandTotal)}</td></tr>`;
-    htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="text-align:right;">DPP</td><td style="text-align:right;">${formatRp(tp.dpp)}</td></tr>`;
-    if(document.getElementById('pakaiPPN').checked) { htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="text-align:right;">PPN 11%</td><td style="text-align:right;">${formatRp(tp.ppn)}</td></tr>`; }
-    if(document.getElementById('pakaiPPH').checked) { htmlNota += `<tr><td colspan="4" class="no-border"></td><td style="text-align:right;">PPH</td><td style="text-align:right; color:#b91c1c;">(${formatRp(tp.pph)})</td></tr>`; }
+    htmlNota += `<tr><td colspan="4" class="no-border" style="padding: 3px;"></td><td style="font-weight:bold; text-align:right; padding: 3px;">TOTAL HARGA</td><td style="font-weight:bold; text-align:right; padding: 3px;">${formatRp(tp.grandTotal)}</td></tr>`;
+    htmlNota += `<tr><td colspan="4" class="no-border" style="padding: 3px;"></td><td style="text-align:right; padding: 3px;">DPP</td><td style="text-align:right; padding: 3px;">${formatRp(tp.dpp)}</td></tr>`;
+    if(document.getElementById('pakaiPPN').checked) { htmlNota += `<tr><td colspan="4" class="no-border" style="padding: 3px;"></td><td style="text-align:right; padding: 3px;">PPN 11%</td><td style="text-align:right; padding: 3px;">${formatRp(tp.ppn)}</td></tr>`; }
+    if(document.getElementById('pakaiPPH').checked) { htmlNota += `<tr><td colspan="4" class="no-border" style="padding: 3px;"></td><td style="text-align:right; padding: 3px;">PPH</td><td style="text-align:right; color:#b91c1c; padding: 3px;">(${formatRp(tp.pph)})</td></tr>`; }
     tbodyNota.innerHTML = htmlNota;
 
     let tglInp = document.getElementById('tglSurat').value;
@@ -413,13 +415,36 @@ function exportWordAsFolio() {
 
     let areaCetak = document.getElementById('areaCetak').innerHTML;
     
-    // PERBAIKAN: Pemisah halaman (Page Break) khusus yang bisa dibaca paksa oleh MS Word
-    areaCetak = areaCetak.replace(/<div class="page-break"><\/div>/g, '<br clear="all" style="page-break-before:always; mso-break-type:page-break" />');
+    // BOLO JURUS 1: Perintah Pemisah Halaman Paksa Khusus MS Word
+    areaCetak = areaCetak.replace(/<div class="page-break">\s*<\/div>/gi, '<br clear="all" style="mso-special-character:line-break; page-break-before:always;" />');
+    
+    // BOLO JURUS 2: Hapus kode spasi tanda tangan yang berlebihan (<br><br><br><br>) ganti dengan block tinggi fix
+    areaCetak = areaCetak.replace(/<br>\s*<br>\s*<br>\s*<br>/gi, '<div style="height: 60px;"></div>');
 
-    // PERBAIKAN: Margin kertas (margin) dikurangi dari 1.0in (2.54cm) menjadi 0.5in (1.27cm) agar isinya muat & tidak berantakan
     let htmlContent = `
     <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head><meta charset='utf-8'><title>Export Word F4</title><style>@page WordSection1 { size: 8.5in 13.0in; margin: 0.5in 0.5in 0.5in 0.5in; mso-header-margin: .5in; mso-footer-margin: .5in; mso-paper-source: 0; } div.WordSection1 { page: WordSection1; } body { font-family: 'Times New Roman', Times, serif; color: black; } table { width: 100%; border-collapse: collapse; } .kop-table { border-bottom: 3px solid black; margin-bottom: 20px; padding-bottom: 10px; } .tabel-print th, .tabel-print td { border: 1pt solid black; padding: 6px 8px; font-size: 11pt; } .tabel-print th { background-color: #f2f2f2; text-align: center; font-weight: bold; } .box-terbilang { border: 3pt double black; padding: 8px 12px; font-weight: bold; font-style: italic; background-color: #f9f9f9; } .no-border { border: none !important; } td { vertical-align: top; }</style></head>
+    <head><meta charset='utf-8'><title>Export Word F4</title>
+    <style>
+        @page WordSection1 { size: 8.5in 13.0in; margin: 0.5in; mso-header-margin: .5in; mso-footer-margin: .5in; mso-paper-source: 0; } 
+        div.WordSection1 { page: WordSection1; } 
+        
+        /* BOLO JURUS 3: Paksa Line Spacing Rapat (1.0) dan Margin 0 */
+        body, table, td, div, p, span, b, i { 
+            font-family: 'Times New Roman', Times, serif; 
+            color: black; 
+            line-height: 1.0; 
+            margin: 0; 
+            padding: 0; 
+        } 
+        
+        table { width: 100%; border-collapse: collapse; } 
+        .kop-table { border-bottom: 3px solid black; margin-bottom: 15px; padding-bottom: 8px; } 
+        .tabel-print th, .tabel-print td { border: 1pt solid black; padding: 4px 6px; font-size: 11pt; } 
+        .tabel-print th { background-color: #f2f2f2; text-align: center; font-weight: bold; } 
+        .box-terbilang { border: 3pt double black; padding: 6px 10px; font-weight: bold; font-style: italic; background-color: #f9f9f9; } 
+        .no-border { border: none !important; } 
+        td { vertical-align: top; }
+    </style></head>
     <body><div class="WordSection1">${areaCetak}</div></body>
     </html>`;
 
